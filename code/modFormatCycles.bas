@@ -13,18 +13,18 @@ Option Explicit
 '   Number/date/percent/currency/other cycles, decimals, scale, and sign toggle.
 '
 ' Bound shortcuts (see modBindings):
-'   F01 – CycleNumberFormat      Ctrl+Shift+1
-'   F02 – CycleDateFormat        Ctrl+Shift+3
-'   F03 – CyclePercentFormat     Ctrl+Shift+5
-'   F04 – CycleCurrencyFormat    Ctrl+Shift+4
-'   F05 – CycleOtherNumbers      Ctrl+Shift+8
-'   F06 – IncreaseDecimal        Ctrl+Shift+.
-'   F07 – DecreaseDecimal        Ctrl+Shift+,
-'   F08 – ScaleUp                Alt+Shift+<
-'   F09 – ScaleDown              Alt+Shift+>
-'   F10 – ToggleSign             Ctrl+Alt+Shift+\
-'   F11 – DivideByHundred        Ctrl+Alt+2
-'   F12 – MultiplyByHundred      Ctrl+Alt+Shift+2
+'   F01 ï¿½ CycleNumberFormat      Ctrl+Shift+1
+'   F02 ï¿½ CycleDateFormat        Ctrl+Shift+3
+'   F03 ï¿½ CyclePercentFormat     Ctrl+Shift+5
+'   F04 ï¿½ CycleCurrencyFormat    Ctrl+Shift+4
+'   F05 ï¿½ CycleOtherNumbers      Ctrl+Shift+8
+'   F06 ï¿½ IncreaseDecimal        Ctrl+Shift+.
+'   F07 ï¿½ DecreaseDecimal        Ctrl+Shift+,
+'   F08 ï¿½ ScaleUp                Alt+Shift+<
+'   F09 ï¿½ ScaleDown              Alt+Shift+>
+'   F10 ï¿½ ToggleSign             Ctrl+Alt+Shift+\
+'   F11 ï¿½ DivideByHundred        Ctrl+Alt+2
+'   F12 ï¿½ MultiplyByHundred      Ctrl+Alt+Shift+2
 '==============================================================================
 
 '------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ Sub CycleDateFormat()
     If Selection.Address(False, False) <> PrevDateAddress Then FormatDateIndex = 0
     PrevDateAddress = Selection.Address(False, False)
     Dim dates As Variant, ni As Long
-    dates = Array("m/d/yyyy", "m/d/yy", "mmm-yy", "d-mmm-yy;d-mmm-yy;-")
+    dates = Array("m/d/yyyy", "m/d/yy", "yyyy-mm-dd", "mmm-yy", "d-mmm-yy;d-mmm-yy;-")
     ni = FormatDateIndex Mod (UBound(dates) + 1)
     Selection.NumberFormat = dates(ni)
     FormatDateIndex = FormatDateIndex + 1
@@ -76,9 +76,9 @@ Sub CyclePercentFormat()
     If Selection.Address(False, False) <> PrevPctAddress Then FormatPctIndex = 0
     PrevPctAddress = Selection.Address(False, False)
     Dim fmts(1 To 5) As String
-    fmts(1) = "0.0%;(0.0%);""—"";@"
-    fmts(2) = "0%;(0%);""—"";@"
-    fmts(3) = "+0.0%;-0.0%;""—"";@"
+    fmts(1) = "0.0%;(0.0%);""ï¿½"";@"
+    fmts(2) = "0%;(0%);""ï¿½"";@"
+    fmts(3) = "+0.0%;-0.0%;""ï¿½"";@"
     fmts(4) = "[<=-0.0005](0.0%);[>=0.0005]0.0%;"""";@"
     fmts(5) = "0.0%;(0.0%);"""";@"
     Dim ni As Long

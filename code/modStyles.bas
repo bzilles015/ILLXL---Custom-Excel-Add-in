@@ -16,23 +16,23 @@ Option Explicit
 '   - Zero-check conditional formatting
 '
 ' Bound shortcuts (see modBindings):
-'   S01 – AutoColorSelection      Ctrl+Alt+A
-'   S02 – CycleFont               Ctrl+'
-'   S03 – CycleFill               Ctrl+Shift+K
-'   S04 – CycleTextCase           Ctrl+Alt+Shift+I
-'   S05 – CycleFontColor          Ctrl+Shift+C
-'   S06 – CycleInputStyle         Ctrl+Alt+Shift+U
-'   S07 – CycleHeaderStyle        Ctrl+Alt+Shift+H
-'   S08 – InsertHeadersFromPrompt Ctrl+Alt+Shift+Y
-'   S09 – InsertVarianceHeaders   Ctrl+Alt+Shift+D
-'   S10 – CenterAcrossSelection   Ctrl+Alt+E
-'   S11 – IncreaseFontSize        Ctrl+Shift+F
-'   S12 – DecreaseFontSize        Ctrl+Shift+G
-'   S13 – IndentIn                Ctrl+Shift+]
-'   S14 – IndentOut               Ctrl+Shift+[
-'   S15 – InsertStaticNow         Ctrl+Shift+N
-'   S16 – ApplyZeroCheckCF        Ctrl+Alt+Shift+Z
-'   S17 – ClearZeroCheckCF        Ctrl+Alt+Shift+X
+'   S01 ï¿½ AutoColorSelection      Ctrl+Alt+A
+'   S02 ï¿½ CycleFont               Ctrl+'
+'   S03 ï¿½ CycleFill               Ctrl+Shift+K
+'   S04 ï¿½ CycleTextCase           Ctrl+Alt+Shift+I
+'   S05 ï¿½ CycleFontColor          Ctrl+Shift+C
+'   S06 ï¿½ CycleInputStyle         Ctrl+Alt+Shift+U
+'   S07 ï¿½ CycleHeaderStyle        Ctrl+Alt+Shift+H
+'   S08 ï¿½ InsertHeadersFromPrompt Ctrl+Alt+Shift+Y
+'   S09 ï¿½ InsertVarianceHeaders   Ctrl+Alt+Shift+D
+'   S10 ï¿½ CenterAcrossSelection   Ctrl+Alt+E
+'   S11 ï¿½ IncreaseFontSize        Ctrl+Shift+F
+'   S12 ï¿½ DecreaseFontSize        Ctrl+Shift+G
+'   S13 ï¿½ IndentIn                Ctrl+Shift+]
+'   S14 ï¿½ IndentOut               Ctrl+Shift+[
+'   S15 ï¿½ InsertStaticNow         Ctrl+Shift+N
+'   S16 ï¿½ ApplyZeroCheckCF        Ctrl+Alt+Shift+Z
+'   S17 ï¿½ ClearZeroCheckCF        Ctrl+Alt+Shift+X
 '   (ZoomIn/ZoomOut commented out - use native Excel zoom)
 '==============================================================================
 
@@ -91,7 +91,7 @@ Private Function AddToUnion(ByVal acc As Range, ByVal c As Range) As Range
 End Function
 
 '------------------------------------------------------------------------------
-' S02 – CycleFont  (Ctrl+')
+' S02 ï¿½ CycleFont  (Ctrl+')
 '------------------------------------------------------------------------------
 Sub CycleFont()
     BeginMacroWithUndo
@@ -128,7 +128,7 @@ Sub CycleFill()
       "NoFill", _
       RGB(255, 242, 204), _
       RGB(217, 217, 217), _
-      RGB(14, 40, 65), _
+      "DiagStripe", _
       RGB(0, 0, 0), _
       RGB(198, 239, 206), _
       RGB(255, 199, 206), _
@@ -137,7 +137,15 @@ Sub CycleFill()
     ni = FillCycleIndex Mod (UBound(items) + 1)
     cl = items(ni)
     If VarType(cl) = vbString Then
-        Selection.Interior.Pattern = xlNone
+        If cl = "DiagStripe" Then
+            With Selection.Interior
+                .Pattern = xlUp
+                .PatternColor = RGB(191, 191, 191)
+                .Color = RGB(255, 255, 255)
+            End With
+        Else
+            Selection.Interior.Pattern = xlNone
+        End If
     Else
         With Selection.Interior
             .Pattern = xlSolid
@@ -311,7 +319,7 @@ Sub CycleHeaderStyle()
     If Selection.Address(False, False) <> prev Then idx = 0
     prev = Selection.Address(False, False)
     Select Case (idx Mod 4)
-        Case 0: ApplyHeaderStyle Selection, RGB(14, 40, 65)
+        Case 0: ApplyHeaderStyle Selection, RGB(17, 37, 71)       ' Sangoma Primary
         Case 1: ApplyHeaderStyle Selection, RGB(68, 84, 106)
         Case 2: ApplyHeaderStyle Selection, RGB(0, 0, 0)
         Case 3: ApplyHeaderStyle Selection, RGB(68, 114, 196)
@@ -345,7 +353,7 @@ Sub InsertHeadersFromPrompt()
     For i = LBound(parts) To UBound(parts)
         Selection.Cells(1, i + 1).Value = Trim$(parts(i))
     Next i
-    ApplyHeaderStyle Selection.Resize(1, UBound(parts) - LBound(parts) + 1), RGB(14, 40, 65)
+    ApplyHeaderStyle Selection.Resize(1, UBound(parts) - LBound(parts) + 1), RGB(17, 37, 71)
     LogAction "InsertHeaders", Selection.Address(False, False)
     RegisterUndo "Insert Headers"
 End Sub
@@ -359,7 +367,7 @@ Sub InsertVarianceHeaders()
     Dim labels As Variant
     labels = Array("AvF %", "AvB%", "Var AvB")
     Selection.Resize(1, 3).Value = labels
-    ApplyHeaderStyle Selection.Resize(1, 3), RGB(14, 40, 65)
+    ApplyHeaderStyle Selection.Resize(1, 3), RGB(17, 37, 71)
     LogAction "InsertVarHdrs", Selection.Address(False, False)
     RegisterUndo "Insert Variance Headers"
 End Sub
