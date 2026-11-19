@@ -17,7 +17,11 @@ $dog = Start-Job { param($p) Start-Sleep 240; Stop-Process -Id $p -Force -EA Sil
 $ai = $xl.Workbooks.Open($AddIn)
 $tag = "'" + $ai.Name + "'!"
 function Run($m) { [void]$xl.Run($tag + $m) }
-function RunV($m, $a) { if ($PSBoundParameters.ContainsKey('a')) { $xl.Run($tag + $m, $a) } else { $xl.Run($tag + $m) } }
+function RunV($m, $a) {
+    # a VBA "null string" can't cross COM - treat it as ""
+    try { if ($PSBoundParameters.ContainsKey('a')) { $xl.Run($tag + $m, $a) } else { $xl.Run($tag + $m) } }
+    catch { if ($_.Exception.Message -match "Parameter 'ptr'") { '' } else { throw } }
+}
 
 # Settings go to a throwaway folder - never touches the real %APPDATA%\ILLXL
 $root = Join-Path $env:TEMP ("illxl_test_" + [guid]::NewGuid().ToString('N').Substring(0, 8))
@@ -216,6 +220,14 @@ try {
     Check "Border cycle: thin > none > medium" (($b1 -eq 2) -and ($b2 -eq -4142) -and ($b3 -eq -4138)) "$b1 / $b2 / $b3"
     Sel $s1 "U7"; Run "ApplyInputNexcess"
     Check "ApplyInputNexcess by name" ($s1.Range("U7").Interior.Color -eq 13434879) $s1.Range("U7").Interior.Color
+
+    # --- Settings window: drive every page without showing it ------------------
+    $uiRoot = "$root\ui"
+    [void]$xl.Run($tag + "SetSettingsRoot", $uiRoot, $true); [void]$xl.Run($tag + "LoadSettings")
+    Remove-Item "$uiRoot\presets\Banker.ini"                 # room for Duplicate (max 3)
+    $ui = RunV "SettingsUiSelfTest"
+    Check "Settings window self-test" ($ui -eq '') $ui
+    [void]$xl.Run($tag + "SetSettingsRoot", $root, $true); [void]$xl.Run($tag + "ApplyPreset", "Nexcess")
 
     Check "Back to Nexcess: no warnings" ((RunV "SettingsWarnings") -eq '') (RunV "SettingsWarnings")
 

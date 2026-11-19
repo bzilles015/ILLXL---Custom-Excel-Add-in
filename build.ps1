@@ -26,12 +26,14 @@ Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory $tmp | Out-Null
 
 # UTF-8 source -> Windows-1252 + CRLF (what the VBA editor expects)
+#   *.bas = standard modules   *.cls = class modules   *.vba = UserForm code
 python -I -c @"
 import pathlib, sys
 src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
-for f in src.glob('*.bas'):
-    t = f.read_text(encoding='utf-8').replace('\r\n', '\n').replace('\n', '\r\n')
-    (dst / f.name).write_bytes(t.encode('cp1252'))
+for pat in ('*.bas', '*.cls'):
+    for f in src.glob(pat):
+        t = f.read_text(encoding='utf-8').replace('\r\n', '\n').replace('\n', '\r\n')
+        (dst / f.name).write_bytes(t.encode('cp1252'))
 "@ "$PSScriptRoot\src" $tmp
 
 $xl = New-Object -ComObject Excel.Application
@@ -41,7 +43,18 @@ try {
     while ($wb.Worksheets.Count -gt 1) { $wb.Worksheets($wb.Worksheets.Count).Delete() }
 
     # --- modules ---------------------------------------------------------------
-    foreach ($f in Get-ChildItem $tmp -Filter *.bas) { [void]$wb.VBProject.VBComponents.Import($f.FullName) }
+    $proj = $wb.VBProject
+    foreach ($f in Get-ChildItem $tmp -Filter *.bas) { [void]$proj.VBComponents.Import($f.FullName) }
+    # UserForms: created empty (they build their controls in code), then given their code.
+    # Adding a form also adds the Microsoft Forms 2.0 reference the class below needs.
+    foreach ($f in Get-ChildItem "$PSScriptRoot\src" -Filter *.vba) {
+        $form = $proj.VBComponents.Add(3)                  # 3 = vbext_ct_MSForm
+        $form.Name = $f.BaseName
+        $cm = $form.CodeModule
+        if ($cm.CountOfLines -gt 0) { $cm.DeleteLines(1, $cm.CountOfLines) }
+        $cm.AddFromString([IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8))
+    }
+    foreach ($f in Get-ChildItem $tmp -Filter *.cls) { [void]$proj.VBComponents.Import($f.FullName) }
 
     # --- hidden sheets -----------------------------------------------------------
     $undo = $wb.Worksheets(1); $undo.Name = '_Undo'
