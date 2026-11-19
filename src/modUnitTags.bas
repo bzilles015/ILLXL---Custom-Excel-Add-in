@@ -58,12 +58,13 @@ End Sub
 '------------------------------------------------------------------------------
 Public Sub RemoveUnitTag()
     If TypeName(Selection) <> "Range" Then Exit Sub
+    If WorkCells(Selection) Is Nothing Then Exit Sub                ' nothing to strip
     BeginMacroWithUndo
-    
+
     Dim c As Range
     Application.ScreenUpdating = False
-    
-    For Each c In Selection.Cells
+
+    For Each c In WorkCells(Selection).Cells                        ' used cells only
         ' IMPROVEMENT: Only process cells with actual content
         If Not c.HasFormula And Len(c.Value2) > 0 Then
             c.Value = StripLastBracketTag(CStr(c.Value))
@@ -102,11 +103,15 @@ End Sub
 Private Sub ApplyUniformTagCycle(ByVal tags As Variant, ByVal actionName As String, _
                                  Optional ByVal forcedTag As String = "")
     If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
+    Dim tgt As Range
+    Set tgt = WriteCells(Selection)                     ' whole columns: used rows only
+    If tgt Is Nothing Then Exit Sub
+    If Not ConfirmBig(tgt, "Unit tags") Then Exit Sub   ' tags go into empty cells too
+    BeginMacroWithUndo tgt
 
     ' 1) Determine the current tag from first nonblank, non-formula cell in selection
     Dim cur As String, idx As Long
-    cur = DetectSelectionTag(Selection)
+    cur = DetectSelectionTag(tgt)
     idx = FindTagIndex(cur, tags)
 
     ' 2) Compute next tag for ENTIRE selection
@@ -124,7 +129,7 @@ Private Sub ApplyUniformTagCycle(ByVal tags As Variant, ByVal actionName As Stri
     Dim c As Range
     Application.ScreenUpdating = False
     
-    For Each c In Selection.Cells
+    For Each c In tgt.Cells
         ' IMPROVEMENT: Only process cells that have content or will have content
         If Not c.HasFormula Then
             If Len(c.Value2) > 0 Then

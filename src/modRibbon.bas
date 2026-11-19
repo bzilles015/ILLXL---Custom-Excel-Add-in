@@ -54,11 +54,16 @@ End Sub
 ' R02 - Buttons
 '------------------------------------------------------------------------------
 Public Sub Rib_Action(control As IRibbonControl)
-    RunCommand control.Tag
+    RunCmd control.Tag                              ' modUi: one safe path for every command
 End Sub
 
 Public Sub Rib_Screentip(control As IRibbonControl, ByRef returnedVal)
     returnedVal = ScreentipFor(control.Tag)
+End Sub
+
+' Tooltip body: the command's one-line description from the catalog (modBindings)
+Public Sub Rib_Supertip(control As IRibbonControl, ByRef returnedVal)
+    returnedVal = CommandInfo(control.Tag)(2)
 End Sub
 
 ' "Cycle Number Format  (Ctrl+Shift+1)" - the key comes from the active preset
@@ -72,13 +77,6 @@ Public Function ScreentipFor(ByVal macro As String) As String
     ScreentipFor = label
 End Function
 
-Private Sub RunCommand(ByVal macro As String)
-    On Error GoTo Failed
-    Application.Run "'" & ThisWorkbook.Name & "'!" & macro
-    Exit Sub
-Failed:
-    MsgBox "ILLXL couldn't run '" & macro & "':" & vbCrLf & Err.Description, vbExclamation, "ILLXL"
-End Sub
 
 '------------------------------------------------------------------------------
 ' R03 - Gallery callbacks (thin wrappers - see Gallery* below)
@@ -101,7 +99,7 @@ Public Sub Gal_Image(control As IRibbonControl, index As Integer, ByRef returned
 End Sub
 
 Public Sub Gal_Action(control As IRibbonControl, selectedId As String, selectedIndex As Integer)
-    GalleryPick control.Id, selectedIndex
+    RunCmd "pick:" & control.Id & ":" & selectedIndex   ' same safe path as every command
 End Sub
 
 '==============================================================================

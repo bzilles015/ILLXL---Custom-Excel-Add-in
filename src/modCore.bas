@@ -30,6 +30,7 @@ Option Explicit
 '==============================================================================
 
 '==== Constants ====
+Public Const ILLXL_VERSION As String = "dev"           ' stamped by build.ps1 (-Version)
 Private Const MAX_UNDO_CELLS As Long = 5000
 Private Const LOG_ROTATION_THRESHOLD As Long = 10000
 Private Const UNDO_SHEET As String = "_Undo"           ' scratch sheet inside the add-in
@@ -162,7 +163,10 @@ Sub BeginMacroWithUndo(Optional ByVal Target As Range)
         If TypeName(Selection) = "Range" Then Set Target = Selection
     End If
     If Not Target Is Nothing Then
-        If Target.Cells.CountLarge > MAX_UNDO_CELLS Then Exit Sub
+        If Target.Cells.CountLarge > MAX_UNDO_CELLS Then
+            FlashStatus "ILLXL: over " & Format$(MAX_UNDO_CELLS, "#,##0") & " cells - this action can't be undone with Ctrl+Z."
+            Exit Sub
+        End If
         Set UndoSheet = Target.Worksheet
 
         '-- 1) Formatting: copy each area to the same address on _Undo
@@ -272,7 +276,7 @@ Sub UndoLastAction()
     UndoBufferCount = 0
     Exit Sub
 Gone:
-    MsgBox "Nothing to undo - the sheet from the last ILLXL action is no longer open.", vbInformation, "ILLXL"
+    UiMsg "Nothing to undo - the sheet from the last ILLXL action is no longer open."
 End Sub
 
 '--- Undo helpers -------------------------------------------------------------
@@ -281,13 +285,13 @@ Private Function IsSpillChild(ByVal c As Range) As Boolean
     If c.HasSpill Then IsSpillChild = (c.SpillParent.Address <> c.Address)
 End Function
 
-Private Function FormulaOf(ByVal c As Range) As String
+Public Function FormulaOf(ByVal c As Range) As String
     On Error Resume Next
     FormulaOf = c.Formula2                          ' keeps dynamic arrays intact (365)
     If Err.Number <> 0 Then FormulaOf = c.Formula   ' older Excel
 End Function
 
-Private Sub SetFormula(ByVal c As Range, ByVal f As String)
+Public Sub SetFormula(ByVal c As Range, ByVal f As String)
     On Error Resume Next
     c.Formula2 = f
     If Err.Number <> 0 Then Err.Clear: c.Formula = f
@@ -321,67 +325,92 @@ Sub LogAction(ByVal actionName As String, ByVal Target As String)
 End Sub
 
 '------------------------------------------------------------------------------
-' C05 - MakeRefsAbsolute  (Ctrl+Alt+Shift+A)
+' C05 - MakeRefsAbsolute  (Ctrl+Alt+Shift+A)   A1 -> $A$1
+' C06 - MakeRefsRelative  (Ctrl+Alt+Shift+R)   $A$1 -> A1
+'     Formula cells only. Excel can't convert formulas over 255 characters -
+'     those are skipped and counted, the rest still convert.
 '------------------------------------------------------------------------------
 Sub MakeRefsAbsolute()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = Application.ConvertFormula(c.Formula, xlA1, xlA1, xlAbsolute)
-        End If
-    Next c
-    LogAction "MakeAbs", Selection.Address(False, False)
-    RegisterUndo "Make Refs Absolute"
+    ConvertRefs xlAbsolute, "Make Refs Absolute"
 End Sub
 
-'------------------------------------------------------------------------------
-' C06 - MakeRefsRelative  (Ctrl+Alt+Shift+R)
-'------------------------------------------------------------------------------
 Sub MakeRefsRelative()
+    ConvertRefs xlRelative, "Make Refs Relative"
+End Sub
+
+Private Sub ConvertRefs(ByVal toType As XlReferenceType, ByVal undoName As String)
     If TypeName(Selection) <> "Range" Then Exit Sub
+    Dim formulas As Range, c As Range, f As String, skipped As Long
+    Set formulas = SpecialCellsIn(Selection, xlCellTypeFormulas)
+    If formulas Is Nothing Then Exit Sub
     BeginMacroWithUndo
-    Dim c As Range
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = Application.ConvertFormula(c.Formula, xlA1, xlA1, xlRelative)
+    For Each c In formulas.Cells
+        f = ""
+        On Error Resume Next
+        f = Application.ConvertFormula(FormulaOf(c), xlA1, xlA1, toType)
+        On Error GoTo 0
+        If Len(f) = 0 Or VarType(f) <> vbString Then
+            skipped = skipped + 1
+        ElseIf f <> FormulaOf(c) Then
+            SetFormula c, f
         End If
     Next c
-    LogAction "MakeRel", Selection.Address(False, False)
-    RegisterUndo "Make Refs Relative"
+    LogAction undoName, Selection.Address(False, False)
+    RegisterUndo undoName
+    If skipped > 0 Then UiMsg skipped & " formula(s) are longer than Excel can convert (255 characters) and were left as they were."
 End Sub
 
 '------------------------------------------------------------------------------
 ' C07 - GoToNextBlank  (Ctrl+Alt+Shift+N)
+' C08 - GoToNextError  (Ctrl+Alt+Shift+E)
+'     Jump to the next blank / error cell after the active cell, row by row,
+'     wrapping to the top. With a range selected it searches that range and
+'     keeps it selected (so you can keep pressing); with one cell selected it
+'     searches the whole used area of the sheet.
 '------------------------------------------------------------------------------
 Sub GoToNextBlank()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    Dim blanks As Range, nxt As Range
-    On Error Resume Next
-    Set blanks = Selection.SpecialCells(xlCellTypeBlanks)
-    On Error GoTo 0
-    If blanks Is Nothing Then Beep: Exit Sub
-    Set nxt = blanks.Find(What:="", After:=ActiveCell, LookIn:=xlFormulas, LookAt:=xlWhole, _
-                          SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False)
-    If Not nxt Is Nothing Then nxt.Select Else Beep
+    JumpToNext SpecialCellsIn(SearchArea(), xlCellTypeBlanks)
 End Sub
 
-'------------------------------------------------------------------------------
-' C08 - GoToNextError  (Ctrl+Alt+Shift+E)
-'------------------------------------------------------------------------------
 Sub GoToNextError()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    Dim errs As Range, nxt As Range
-    On Error Resume Next
-    Set errs = Selection.SpecialCells(xlCellTypeFormulas, xlErrors)
-    If errs Is Nothing Then Set errs = Selection.SpecialCells(xlCellTypeConstants, xlErrors)
-    On Error GoTo 0
-    If errs Is Nothing Then Beep: Exit Sub
-    Set nxt = errs.Find(What:="*", After:=ActiveCell, LookIn:=xlFormulas, LookAt:=xlWhole, _
-                        SearchOrder:=xlByRows, SearchDirection:=xlNext, MatchCase:=False)
-    If Not nxt Is Nothing Then nxt.Select Else Beep
+    Dim f As Range, k As Range
+    Set f = SpecialCellsIn(SearchArea(), xlCellTypeFormulas, xlErrors)   ' #REF! from formulas
+    Set k = SpecialCellsIn(SearchArea(), xlCellTypeConstants, xlErrors)  ' typed #N/A
+    If f Is Nothing Then
+        Set f = k
+    ElseIf Not k Is Nothing Then
+        Set f = Union(f, k)
+    End If
+    JumpToNext f
 End Sub
+
+Private Function SearchArea() As Range
+    If Selection.Cells.CountLarge = 1 Then Set SearchArea = ActiveSheet.UsedRange Else Set SearchArea = Selection
+End Function
+
+' First target after the active cell (row by row), else the first one overall
+Private Sub JumpToNext(ByVal targets As Range)
+    Dim a As Range, c As Range, best As Range, first As Range, r0 As Long, c0 As Long
+    If targets Is Nothing Then Beep: Exit Sub
+    r0 = ActiveCell.Row: c0 = ActiveCell.Column
+    For Each a In targets.Areas
+        For Each c In a.Cells
+            If IsBefore(c, first) Then Set first = c
+            If c.Row > r0 Or (c.Row = r0 And c.Column > c0) Then
+                If IsBefore(c, best) Then Set best = c
+            End If
+        Next c
+    Next a
+    If best Is Nothing Then Set best = first                 ' wrap to the top
+    If Selection.Cells.CountLarge = 1 Then best.Select Else best.Activate
+End Sub
+
+Private Function IsBefore(ByVal c As Range, ByVal other As Range) As Boolean
+    If other Is Nothing Then IsBefore = True: Exit Function
+    IsBefore = (c.Row < other.Row) Or (c.Row = other.Row And c.Column < other.Column)
+End Function
 
 '------------------------------------------------------------------------------
 ' C09 - BreakExternalLinksInSelection  (retired)
@@ -495,11 +524,22 @@ End Sub
 '------------------------------------------------------------------------------
 Sub RemoveUnusedStyles()
     If ActiveWorkbook Is Nothing Then Exit Sub
-    If MsgBox("Delete custom cell styles that no cell in '" & ActiveWorkbook.Name & _
-              "' uses?" & vbCrLf & "Built-in styles and styles in use are kept.", _
-              vbOKCancel + vbQuestion, "ILLXL - Remove Unused Styles") = vbCancel Then Exit Sub
+    Dim used As Object, ws As Worksheet, i As Long, removeCount As Long, sty As Style, locked As String
 
-    Dim used As Object, ws As Worksheet, i As Long, removeCount As Long, sty As Style
+    ' Excel refuses to delete ANY style while a sheet in the workbook is protected
+    For Each ws In ActiveWorkbook.Worksheets
+        If ws.ProtectContents Then locked = locked & vbCrLf & "   " & ws.Name
+    Next ws
+    If Len(locked) > 0 Then
+        UiMsg "Excel can't delete styles while these sheets are protected:" & locked & vbCrLf & vbCrLf & _
+              "Unprotect them (Review > Unprotect Sheet), run Clean Up Styles, then protect them again.", vbExclamation
+        Exit Sub
+    End If
+
+    If UiMsg("Delete custom cell styles that no cell in '" & ActiveWorkbook.Name & _
+             "' uses?" & vbCrLf & "Built-in styles and styles in use are kept.", _
+             vbOKCancel + vbQuestion) <> vbOK Then Exit Sub
+
     Set used = CreateObject("Scripting.Dictionary")
     used.CompareMode = vbTextCompare
 
@@ -524,7 +564,7 @@ Sub RemoveUnusedStyles()
     On Error GoTo 0
 
     Application.StatusBar = False
-    MsgBox "Removed " & removeCount & " unused custom styles.", vbInformation, "ILLXL"
+    UiMsg "Removed " & removeCount & " unused custom styles."
     LogAction "RemoveStyles", CStr(removeCount)
 End Sub
 
@@ -532,7 +572,7 @@ End Sub
 ' sheets because most of a model is a single style (Normal).
 Private Sub CollectStyles(ByVal rng As Range, ByVal used As Object)
     Dim half As Long
-    If Not IsNull(rng.Style) Then
+    If TypeName(rng.Style) = "Style" Then                ' mixed styles = Nothing/Null in VBA
         used(rng.Style.Name) = True
     ElseIf rng.Rows.count > 1 Then
         half = rng.Rows.count \ 2

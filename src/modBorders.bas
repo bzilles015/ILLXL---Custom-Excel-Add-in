@@ -33,6 +33,7 @@ Private Sub CycleBorder(ByVal edge As XlBordersIndex, _
                         ByRef index As Integer, _
                         ByRef prevAddr As String, _
                         ByVal edgeName As String)
+    If TypeName(Selection) <> "Range" Then Exit Sub         ' a shape / chart is selected
     BeginMacroWithUndo
     If Selection.Address(False, False) <> prevAddr Then index = 0
     prevAddr = Selection.Address(False, False)

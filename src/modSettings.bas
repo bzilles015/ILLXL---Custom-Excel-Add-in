@@ -123,9 +123,8 @@ Public Sub LoadSettings()
     ResetCycleState
 
     If Len(Warnings) > 0 And Not QuietLoad Then
-        MsgBox "Some settings in preset '" & ActivePreset & "' could not be used." & vbCrLf & _
-               "ILLXL defaults were used for these:" & vbCrLf & vbCrLf & Warnings, _
-               vbExclamation, "ILLXL Presets"
+        UiMsg "Some settings in preset '" & ActivePreset & "' could not be used." & vbCrLf & _
+              "ILLXL defaults were used for these:" & vbCrLf & vbCrLf & Warnings, vbExclamation
     End If
 End Sub
 
@@ -168,6 +167,12 @@ End Function
 '------------------------------------------------------------------------------
 Public Sub ShowSettings()
     EnsureSettings
+    If UiIsTest() Then                              ' tests: build the window, never block on it
+        Dim f As Object
+        Set f = New frmSettings
+        Unload f
+        Exit Sub
+    End If
     frmSettings.Show
 End Sub
 
@@ -179,7 +184,7 @@ End Sub
 Public Function ImportPreset() As String
     Dim src As Variant, txt As String, nm As String, names As Variant, ans As String, i As Long
     ImportPreset = ""
-    src = Application.GetOpenFilename("ILLXL preset (*.ini),*.ini", , "Import ILLXL preset")
+    src = UiOpenFile("ILLXL preset (*.ini),*.ini", "Import ILLXL preset")
     If VarType(src) = vbBoolean Then Exit Function   ' cancelled
 
     txt = ReadUtf8(CStr(src))
@@ -189,13 +194,12 @@ Public Function ImportPreset() As String
 
     names = PresetNames()
     If Len(Dir$(PresetPath(nm))) > 0 Then
-        If MsgBox("Replace your existing preset '" & nm & "'?", vbOKCancel + vbQuestion, _
-                  "ILLXL Presets") = vbCancel Then Exit Function
+        If UiMsg("Replace your existing preset '" & nm & "'?", vbOKCancel + vbQuestion) <> vbOK Then Exit Function
     ElseIf UBound(names) + 1 >= MAX_PRESETS Then
         Dim msg As String
         msg = "ILLXL keeps up to " & MAX_PRESETS & " presets. Which one should '" & nm & "' replace?" & vbCrLf & vbCrLf
         For i = 0 To UBound(names): msg = msg & "   " & (i + 1) & "   " & names(i) & vbCrLf: Next i
-        ans = Trim$(InputBox(msg, "ILLXL Presets"))
+        ans = Trim$(UiInput(msg, "Presets"))
         If Not IsNumeric(ans) Then Exit Function
         i = CLng(ans) - 1
         If i < 0 Or i > UBound(names) Then Exit Function
@@ -394,7 +398,7 @@ End Sub
 
 Public Function ExportPreset(ByVal presetName As String) As Boolean
     Dim dest As Variant
-    dest = Application.GetSaveAsFilename(presetName & ".ini", "ILLXL preset (*.ini),*.ini", , "Export ILLXL preset")
+    dest = UiSaveFile(presetName & ".ini", "ILLXL preset (*.ini),*.ini", "Export ILLXL preset")
     If VarType(dest) = vbBoolean Then Exit Function
     WriteUtf8 CStr(dest), PresetToText(EditLoad(presetName))
     ExportPreset = True
@@ -789,7 +793,7 @@ Private Function SafeName(ByVal s As String) As String
     If Len(SafeName) = 0 Then SafeName = "Imported"
 End Function
 
-Private Sub FlashStatus(ByVal msg As String)
+Public Sub FlashStatus(ByVal msg As String)
     Application.StatusBar = msg
     Application.OnTime Now + TimeSerial(0, 0, 4), "'" & ThisWorkbook.Name & "'!ClearStatus"
 End Sub

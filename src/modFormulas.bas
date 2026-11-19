@@ -13,56 +13,62 @@ Option Explicit
 '   Formula insertion tools for financial modeling - CAGR, % change,
 '   equals left, growth rates, and aggregation shortcuts.
 '
-' Bound shortcuts (see modBindings):
-'   M01 – InsertCAGR              Ctrl+Alt+Shift+C
-'   M02 – InsertPercentChange     Ctrl+Alt+Shift+V
-'   M03 – EqualsLeft              Ctrl+Alt+L
-'   M04 – ApplyGrowthRate         Ctrl+Alt+Shift+G
-'   M05 – InsertQuickSum          Ctrl+Alt+=
-'   M06 – InsertQuickAverage      Ctrl+Alt+Shift+=
+'   Picked cells can be on another sheet or workbook - RefFrom adds the
+'   sheet name so the formula points at the right place. Numbers are written
+'   with "." decimals (NumText) so formulas work on any regional setting.
+'
+' Default shortcuts (see the active preset):
+'   M01 - InsertCAGR              Ctrl+Alt+Shift+C
+'   M02 - InsertPercentChange     Ctrl+Alt+Shift+V
+'   M03 - EqualsLeft              Ctrl+Alt+L
+'   M04 - ApplyGrowthRate         Ctrl+Alt+Shift+G
+'   M05 - InsertQuickSum          Ctrl+Alt+=
+'   M06 - InsertQuickAverage      Ctrl+Alt+Shift+=
 '==============================================================================
 
 '------------------------------------------------------------------------------
 ' M01 - InsertCAGR  (Ctrl+Alt+Shift+C)
 '     Inserts a CAGR formula: (End/Begin)^(1/n) - 1
 '     Prompts for beginning value, ending value, and number of periods.
+'     n = end year MINUS start year (2023 -> 2026 = 3 periods, not 4).
 '------------------------------------------------------------------------------
 Sub InsertCAGR()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    If Selection.Cells.count <> 1 Then
-        MsgBox "Select a single cell where you want the CAGR formula.", vbInformation
+    If Selection.Cells.CountLarge <> 1 Then
+        UiMsg "Select a single cell where you want the CAGR formula."
         Exit Sub
     End If
-    
-    BeginMacroWithUndo
-    
-    Dim beginCell As Range, endCell As Range
-    Dim periods As Variant
-    
-    On Error Resume Next
-    Set beginCell = Application.InputBox("Select the BEGINNING value cell:", "CAGR - Beginning Value", Type:=8)
-    If beginCell Is Nothing Then Exit Sub
-    
-    Set endCell = Application.InputBox("Select the ENDING value cell:", "CAGR - Ending Value", Type:=8)
-    If endCell Is Nothing Then Exit Sub
-    On Error GoTo 0
-    
-    periods = Application.InputBox("Number of periods (= end year minus start year)" & vbCrLf & _
-                   "e.g. 2023 to 2026 = 3 periods, NOT 4", "CAGR Periods", 5, Type:=1)
-    If VarType(periods) = vbBoolean Then Exit Sub  ' User cancelled
+
+    Dim host As Range, beginCell As Variant, endCell As Variant, periods As Variant
+    Set host = Selection
+
+    StoreIt beginCell, UiPick("Select the BEGINNING value cell:", "CAGR - Beginning Value", 8)
+    If Not IsObject(beginCell) Then Exit Sub                          ' cancelled
+    StoreIt endCell, UiPick("Select the ENDING value cell:", "CAGR - Ending Value", 8)
+    If Not IsObject(endCell) Then Exit Sub
+
+    periods = UiPick("Number of periods (= end year minus start year)" & vbCrLf & _
+                     "e.g. 2023 to 2026 = 3 periods, NOT 4", "CAGR Periods", 1, 5)
+    If VarType(periods) = vbBoolean Then Exit Sub                     ' cancelled
     If periods <= 0 Then
-        MsgBox "Periods must be greater than 0.", vbExclamation
+        UiMsg "Periods must be greater than 0.", vbExclamation
         Exit Sub
     End If
-    
-    ' Formula: (End/Begin)^(1/n) - 1
-    ' With error handling for divide by zero
-    Selection.Formula = "=IFERROR((" & endCell.Address(False, False) & "/" & _
-                        beginCell.Address(False, False) & ")^(1/" & periods & ")-1,0)"
-    Selection.NumberFormat = "0.0%"
-    
-    LogAction "InsertCAGR", Selection.Address(False, False)
+
+    BeginMacroWithUndo host
+    ' Formula: (End/Begin)^(1/n) - 1, shown as 0 if a value is missing or zero
+    host.Formula = "=IFERROR((" & RefFrom(host, endCell.Cells(1, 1)) & "/" & _
+                   RefFrom(host, beginCell.Cells(1, 1)) & ")^(1/" & NumText(periods) & ")-1,0)"
+    host.NumberFormat = "0.0%"
+
+    LogAction "InsertCAGR", host.Address(False, False)
     RegisterUndo "Insert CAGR"
+End Sub
+
+' Store a UiPick result as-is: a Range stays a Range, False stays False.
+' (Passing it in as an argument is what keeps the Range from being read as a value.)
+Private Sub StoreIt(ByRef dst As Variant, ByVal v As Variant)
+    If IsObject(v) Then Set dst = v Else dst = v
 End Sub
 
 '------------------------------------------------------------------------------
@@ -73,24 +79,25 @@ End Sub
 '------------------------------------------------------------------------------
 Sub InsertPercentChange()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    
-    Dim c As Range
+    Dim tgt As Range, c As Range
+    Set tgt = WriteCells(Selection)                             ' whole columns: used rows only
+    If tgt Is Nothing Then Exit Sub
+    If Not ConfirmBig(tgt, "% Change") Then Exit Sub
+    BeginMacroWithUndo tgt
+
     Application.ScreenUpdating = False
-    
-    For Each c In Selection.Cells
+    For Each c In tgt.Cells
         If c.Column > 2 Then
-            ' Current is 1 left, Prior is 2 left
-            ' Using ABS in denominator handles negative base values correctly
+            ' Using ABS in the denominator handles negative base values correctly
             c.Formula = "=IFERROR((" & c.Offset(0, -1).Address(False, False) & "-" & _
                         c.Offset(0, -2).Address(False, False) & ")/ABS(" & _
                         c.Offset(0, -2).Address(False, False) & "),0)"
             c.NumberFormat = cfgPctFormats(0)          ' first preset [PercentFormats]
         End If
     Next c
-    
     Application.ScreenUpdating = True
-    LogAction "InsertPctChg", Selection.Address(False, False)
+
+    LogAction "InsertPctChg", tgt.Address(False, False)
     RegisterUndo "Insert % Change"
 End Sub
 
@@ -101,110 +108,85 @@ End Sub
 '------------------------------------------------------------------------------
 Sub EqualsLeft()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    For Each c In Selection.Cells
-        If c.Column > 1 Then
-            c.Formula = "=" & c.Offset(0, -1).Address(False, False)
-        End If
+    Dim tgt As Range, c As Range
+    Set tgt = WriteCells(Selection)                             ' whole columns: used rows only
+    If tgt Is Nothing Then Exit Sub
+    If Not ConfirmBig(tgt, "Equals Left") Then Exit Sub
+    BeginMacroWithUndo tgt
+
+    Application.ScreenUpdating = False
+    For Each c In tgt.Cells
+        If c.Column > 1 Then c.Formula = "=" & c.Offset(0, -1).Address(False, False)
     Next c
-    LogAction "EqualsLeft", Selection.Address(False, False)
+    Application.ScreenUpdating = True
+
+    LogAction "EqualsLeft", tgt.Address(False, False)
     RegisterUndo "Equals Left"
 End Sub
-
-
 
 '------------------------------------------------------------------------------
 ' M04 - ApplyGrowthRate  (Ctrl+Alt+Shift+G)
 '     Inserts formula: =LEFT * (1 + rate)
-'     Prompts for growth rate, then applies to all selected cells.
+'     Type a rate (0.05 or 5%) or click the cell that holds it (locked with $,
+'     sheet name added if it's on another sheet).
 '------------------------------------------------------------------------------
 Sub ApplyGrowthRate()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    
-    Dim rate As Variant
-    rate = Application.InputBox("Enter growth rate (as decimal, e.g., 0.05 for 5%):" & vbCrLf & _
-                                "Or enter a cell reference like A1", _
-                                "Growth Rate", "0.05", Type:=1 + 8)  ' Allow number or range
-    
-    If VarType(rate) = vbBoolean Then Exit Sub  ' User cancelled
-    
-    BeginMacroWithUndo
-    
-    Dim c As Range
-    Dim rateStr As String
-    
-    ' Check if rate is a range reference or a number
-    If TypeName(rate) = "Range" Then
-        rateStr = rate.Address(True, True)  ' Use absolute reference
+    Dim tgt As Range, c As Range, rate As Variant, rateStr As String
+    Set tgt = WriteCells(Selection)                             ' whole columns: used rows only
+    If tgt Is Nothing Then Exit Sub
+    If Not ConfirmBig(tgt, "Growth Rate") Then Exit Sub
+
+    StoreIt rate, UiPick("Enter growth rate (as decimal, e.g., 0.05 for 5%):" & vbCrLf & _
+                         "Or click the cell that holds the rate", "Growth Rate", 1 + 8, "0.05")
+    If IsObject(rate) Then
+        rateStr = RefFrom(tgt, rate.Cells(1, 1), True)          ' locked, sheet-qualified
+    ElseIf VarType(rate) = vbBoolean Then
+        Exit Sub                                                ' cancelled
     Else
-        rateStr = CStr(rate)
+        rateStr = NumText(CDbl(rate))
     End If
-    
+
+    BeginMacroWithUndo tgt
     Application.ScreenUpdating = False
-    
-    For Each c In Selection.Cells
+    For Each c In tgt.Cells
         If c.Column > 1 Then
             c.Formula = "=" & c.Offset(0, -1).Address(False, False) & "*(1+" & rateStr & ")"
         End If
     Next c
-    
     Application.ScreenUpdating = True
-    LogAction "GrowthRate", Selection.Address(False, False)
+
+    LogAction "GrowthRate", tgt.Address(False, False)
     RegisterUndo "Apply Growth Rate"
 End Sub
 
 '------------------------------------------------------------------------------
 ' M05 - InsertQuickSum  (Ctrl+Alt+=)
-'     Quick SUM formula - select destination cell, then pick range to sum.
+' M06 - InsertQuickAverage  (Ctrl+Alt+Shift+=)
+'     Select the destination cell, then pick the range (any sheet).
 '------------------------------------------------------------------------------
 Sub InsertQuickSum()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    If Selection.Cells.count <> 1 Then
-        MsgBox "Select a single cell where you want the SUM formula.", vbInformation
-        Exit Sub
-    End If
-    
-    Dim sumRange As Range
-    On Error Resume Next
-    Set sumRange = Application.InputBox("Select range to SUM:", "Quick SUM", Type:=8)
-    On Error GoTo 0
-    
-    If sumRange Is Nothing Then Exit Sub
-    
-    BeginMacroWithUndo
-    
-    Selection.Formula = "=SUM(" & sumRange.Address(False, False) & ")"
-    
-    LogAction "QuickSum", Selection.Address(False, False)
-    RegisterUndo "Quick SUM"
+    InsertQuickFunction "SUM", "Quick SUM"
 End Sub
 
-'------------------------------------------------------------------------------
-' M06 - InsertQuickAverage  (Ctrl+Alt+Shift+=)
-'     Quick AVERAGE formula - select destination cell, then pick range.
-'------------------------------------------------------------------------------
 Sub InsertQuickAverage()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    If Selection.Cells.count <> 1 Then
-        MsgBox "Select a single cell where you want the AVERAGE formula.", vbInformation
-        Exit Sub
-    End If
-    
-    Dim avgRange As Range
-    On Error Resume Next
-    Set avgRange = Application.InputBox("Select range to AVERAGE:", "Quick Average", Type:=8)
-    On Error GoTo 0
-    
-    If avgRange Is Nothing Then Exit Sub
-    
-    BeginMacroWithUndo
-    
-    Selection.Formula = "=AVERAGE(" & avgRange.Address(False, False) & ")"
-    
-    LogAction "QuickAvg", Selection.Address(False, False)
-    RegisterUndo "Quick Average"
+    InsertQuickFunction "AVERAGE", "Quick Average"
 End Sub
 
+Private Sub InsertQuickFunction(ByVal fn As String, ByVal title As String)
+    If TypeName(Selection) <> "Range" Then Exit Sub
+    If Selection.Cells.CountLarge <> 1 Then
+        UiMsg "Select a single cell where you want the " & fn & " formula."
+        Exit Sub
+    End If
 
+    Dim host As Range, src As Variant
+    Set host = Selection
+    StoreIt src, UiPick("Select range to " & fn & ":", title, 8)
+    If Not IsObject(src) Then Exit Sub                                ' cancelled
 
+    BeginMacroWithUndo host
+    host.Formula = "=" & fn & "(" & RefFrom(host, src) & ")"
+    LogAction "Quick" & fn, host.Address(False, False)
+    RegisterUndo title
+End Sub

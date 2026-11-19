@@ -11,7 +11,8 @@
 # Requires Excel option: Trust access to the VBA project object model.
 param(
     [ValidateSet('Nexcess', 'Public')] [string]$Edition = 'Nexcess',
-    [string]$Out
+    [string]$Out,
+    [string]$Version = '2.0.0'          # shown in Settings; stamped into ILLXL_VERSION
 )
 $ErrorActionPreference = 'Stop'
 $cfg = @{
@@ -29,12 +30,13 @@ New-Item -ItemType Directory $tmp | Out-Null
 #   *.bas = standard modules   *.cls = class modules   *.vba = UserForm code
 python -I -c @"
 import pathlib, sys
-src, dst = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
+src, dst, ver = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]), sys.argv[3]
 for pat in ('*.bas', '*.cls'):
     for f in src.glob(pat):
         t = f.read_text(encoding='utf-8').replace('\r\n', '\n').replace('\n', '\r\n')
+        t = t.replace('ILLXL_VERSION As String = "dev"', 'ILLXL_VERSION As String = "' + ver + '"')
         (dst / f.name).write_bytes(t.encode('cp1252'))
-"@ "$PSScriptRoot\src" $tmp
+"@ "$PSScriptRoot\src" $tmp $Version
 
 $xl = New-Object -ComObject Excel.Application
 try {

@@ -131,7 +131,7 @@ Private Sub AdjustDecimalsInSelection(ByVal rng As Range, ByVal delta As Long)
     Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
     Dim c As Range, fmt As String, newFmt As String
 
-    For Each c In rng.Cells
+    For Each c In LoopCells(rng).Cells               ' whole columns: used cells only
         fmt = CStr(c.NumberFormat)
         If Not dict.Exists(fmt) Then dict(fmt) = AdjustFormatDecimals(fmt, delta)
         newFmt = dict(fmt)
@@ -140,111 +140,72 @@ Private Sub AdjustDecimalsInSelection(ByVal rng As Range, ByVal delta As Long)
 End Sub
 
 '------------------------------------------------------------------------------
-' F08 ScaleUp  (Alt+Shift+<)
-'     Divides values by 1000 (converts to thousands)
+' F08-F12 - Scale, sign, x100
+'     Numbers are changed in place; formulas are wrapped, e.g. =(A1+B1)/1000.
+'     Blanks, text, dates and errors are left alone. Only used cells are
+'     visited, so a whole-column selection is instant.
 '------------------------------------------------------------------------------
+
+' F08 ScaleUp  (Alt+Shift+<) - divide by 1,000 (show in thousands)
 Sub ScaleUp()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    Application.ScreenUpdating = False
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = "=(" & Mid(c.Formula, 2) & ")/1000"
-        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
-            c.Value = c.Value / 1000
-        End If
-    Next c
-    Application.ScreenUpdating = True
-    LogAction "ScaleUp", Selection.Address(False, False)
-    RegisterUndo "Scale Up"
+    TransformNumbers "/1000", "Scale Up"
 End Sub
 
-'------------------------------------------------------------------------------
-' F09 ScaleDown  (Alt+Shift+>)
-'     Multiplies values by 1000 (converts from thousands)
-'------------------------------------------------------------------------------
+' F09 ScaleDown  (Alt+Shift+>) - multiply by 1,000
 Sub ScaleDown()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    Application.ScreenUpdating = False
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = "=(" & Mid(c.Formula, 2) & ")*1000"
-        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
-            c.Value = c.Value * 1000
-        End If
-    Next c
-    Application.ScreenUpdating = True
-    LogAction "ScaleDown", Selection.Address(False, False)
-    RegisterUndo "Scale Down"
+    TransformNumbers "*1000", "Scale Down"
 End Sub
 
-'------------------------------------------------------------------------------
-' F10 ToggleSign  (Ctrl+Alt+Shift+\)
-'     Reverses the sign of numeric values in selection (positive <-> negative)
-'------------------------------------------------------------------------------
+' F10 ToggleSign  (Ctrl+Alt+Shift+\) - positive <-> negative; a formula
+'     wrapped as =-(...) is unwrapped again on the next press
 Sub ToggleSign()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range, f As String
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            f = c.Formula
-            If Left(f, 3) = "=-(" And Right(f, 1) = ")" Then
-                c.Formula = "=" & Mid(f, 4, Len(f) - 4)  ' unwrap
-            Else
-                c.Formula = "=-(" & Mid(f, 2) & ")"       ' wrap
-            End If
-        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
-            c.Value = -c.Value
-        End If
-    Next c
-    LogAction "ToggleSign", Selection.Address(False, False)
-    RegisterUndo "Toggle Sign"
+    TransformNumbers "neg", "Toggle Sign"
 End Sub
 
-
-'------------------------------------------------------------------------------
-' F11 DivideByHundred  (Ctrl+Alt+2)
-'     Divides values by 100 (e.g., convert 5 to 0.05 for 5%)
-'------------------------------------------------------------------------------
+' F11 DivideByHundred  (Ctrl+Alt+2) - e.g. 5 -> 0.05 for 5%
 Sub DivideByHundred()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = "=(" & Mid(c.Formula, 2) & ")/100"
-        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
-            c.Value = c.Value / 100
-        End If
-    Next c
-    LogAction "DivideByHundred", Selection.Address(False, False)
-    RegisterUndo "Divide by 100"
+    TransformNumbers "/100", "Divide by 100"
 End Sub
 
-
-'------------------------------------------------------------------------------
-' F12 MultiplyByHundred  (Ctrl+Alt+Shift+2)
-'     Multiplies values by 100 (e.g., convert 0.05 to 5)
-'------------------------------------------------------------------------------
+' F12 MultiplyByHundred  (Ctrl+Alt+Shift+2) - e.g. 0.05 -> 5
 Sub MultiplyByHundred()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    Dim c As Range
-    For Each c In Selection.Cells
-        If c.HasFormula Then
-            c.Formula = "=(" & Mid(c.Formula, 2) & ")*100"
-        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
-            c.Value = c.Value * 100
-        End If
-    Next c
-    LogAction "MultiplyByHundred", Selection.Address(False, False)
-    RegisterUndo "Multiply by 100"
+    TransformNumbers "*100", "Multiply by 100"
 End Sub
 
+' Shared engine for F08-F12. op = "/1000", "*1000", "/100", "*100" or "neg".
+Private Sub TransformNumbers(ByVal op As String, ByVal undoName As String)
+    If TypeName(Selection) <> "Range" Then Exit Sub
+    BeginMacroWithUndo
+    Dim c As Range, work As Range, f As String
+    Set work = WorkCells(Selection)                 ' used cells only
+    If Not work Is Nothing Then
+        Application.ScreenUpdating = False
+        For Each c In work.Cells
+            If c.HasFormula Then
+                f = FormulaOf(c)                    ' Formula2: keeps dynamic arrays intact
+                If op <> "neg" Then
+                    f = "=(" & Mid$(f, 2) & ")" & op
+                ElseIf Left$(f, 3) = "=-(" And Right$(f, 1) = ")" Then
+                    f = "=" & Mid$(f, 4, Len(f) - 4)                ' unwrap
+                Else
+                    f = "=-(" & Mid$(f, 2) & ")"                    ' wrap
+                End If
+                SetFormula c, f
+            ElseIf IsNumberCell(c) Then
+                Select Case op
+                    Case "/1000": c.Value = c.Value / 1000
+                    Case "*1000": c.Value = c.Value * 1000
+                    Case "/100":  c.Value = c.Value / 100
+                    Case "*100":  c.Value = c.Value * 100
+                    Case "neg":   c.Value = -c.Value
+                End Select
+            End If
+        Next c
+        Application.ScreenUpdating = True
+    End If
+    LogAction Replace(undoName, " ", ""), Selection.Address(False, False)
+    RegisterUndo undoName
+End Sub
 
 '------------------------------------------------------------------------------
 ' AdjustFormatDecimals - Split multi-section format by ";" and adjust each

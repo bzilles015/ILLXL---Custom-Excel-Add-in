@@ -132,7 +132,7 @@ Sub CycleFont()
     On Error Resume Next
     Selection.Font.Name = cfgFonts(ni)
     If Err.Number <> 0 Then
-        MsgBox "Font '" & cfgFonts(ni) & "' not available. Using Calibri.", vbInformation
+        UiMsg "Font '" & cfgFonts(ni) & "' is not installed on this PC - using Calibri."
         Selection.Font.Name = "Calibri"
         Err.Clear
     End If
@@ -376,8 +376,8 @@ Sub InsertHeadersFromPrompt()
     If TypeName(Selection) <> "Range" Then Exit Sub
     EnsureSettings
     Dim s As String, parts() As String, i As Long, hdr As Range
-    s = InputBox("Enter comma-separated headers (e.g., 2024A,2025B,2026E):", _
-                 "Insert Headers", cfgHeaderPrompt)
+    s = UiInput("Enter comma-separated headers (e.g., 2024A,2025B,2026E):", _
+                "Insert Headers", cfgHeaderPrompt)
     If Len(Trim$(s)) = 0 Then Exit Sub
     parts = Split(s, ",")
     ' Headers can run past the selection - snapshot the cells actually written
@@ -469,7 +469,7 @@ Sub IndentIn()
     If TypeName(Selection) <> "Range" Then Exit Sub
     BeginMacroWithUndo
     Dim c As Range
-    For Each c In Selection.Cells
+    For Each c In LoopCells(Selection).Cells         ' whole columns: used cells only
         If c.HorizontalAlignment = xlCenter Or _
            c.HorizontalAlignment = xlRight Or _
            c.HorizontalAlignment = xlCenterAcrossSelection Then
@@ -488,7 +488,7 @@ Sub IndentOut()
     If TypeName(Selection) <> "Range" Then Exit Sub
     BeginMacroWithUndo
     Dim c As Range
-    For Each c In Selection.Cells
+    For Each c In LoopCells(Selection).Cells         ' whole columns: used cells only
         c.IndentLevel = Application.Max(c.IndentLevel - 1, 0)
         If c.IndentLevel = 0 Then
             c.HorizontalAlignment = xlGeneral
@@ -504,19 +504,19 @@ End Sub
 '------------------------------------------------------------------------------
 Sub InsertStaticNow()
     If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
+    Dim tgt As Range
+    Set tgt = WriteCells(Selection)                     ' whole columns: used rows only
+    If tgt Is Nothing Then Set tgt = Selection.Cells(1, 1)
+    If Not ConfirmBig(tgt, "Timestamp") Then Exit Sub
+    BeginMacroWithUndo tgt
     Static idx As Integer, prev As String
     If Selection.Address(False, False) <> prev Then idx = 0
     prev = Selection.Address(False, False)
 
-    Dim c As Range
     Dim fmt As String
     fmt = cfgStampFormats(idx Mod (UBound(cfgStampFormats) + 1))
-
-    For Each c In Selection
-        c.Value = Now
-        c.NumberFormat = fmt
-    Next c
+    tgt.Value = Now                                     ' one write for the whole range
+    tgt.NumberFormat = fmt
 
     idx = idx + 1
     LogAction "InsertNow:" & fmt, Selection.Address(False, False)
@@ -637,7 +637,7 @@ Public Sub ApplyFontAt(ByVal i As Long)
     If Not StartPick(i, UBound(cfgFonts)) Then Exit Sub
     On Error Resume Next
     Selection.Font.Name = cfgFonts(i)
-    If Err.Number <> 0 Then MsgBox "Font '" & cfgFonts(i) & "' is not installed.", vbInformation, "ILLXL"
+    If Err.Number <> 0 Then UiMsg "Font '" & cfgFonts(i) & "' is not installed on this PC."
     On Error GoTo 0
     FontCycleIndex = i + 1: PrevFontAddress = Selection.Address(False, False)
     RegisterUndo "Font"

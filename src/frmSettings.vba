@@ -215,7 +215,7 @@ Private Sub BuildUi()
     '---- Sidebar -------------------------------------------------------------
     NewLabel Me, "", 0, 0, SIDE_W, FH, , , , cSide          ' sidebar background
     NewLabel Me, "ILLXL", 18, 16, SIDE_W - 20, 26, 18, True, RGB(255, 255, 255)
-    NewLabel Me, "Settings", 19, 42, SIDE_W - 20, 14, 9, False, cSideText
+    NewLabel Me, "Settings   v" & ILLXL_VERSION, 19, 42, SIDE_W - 20, 14, 9, False, cSideText
     Dim navs As Variant, i As Long
     navs = Array("presets|Presets", "formats|Number Formats", "colors|Colors & Styles", _
                  "fonts|Fonts & Borders", "tags|Tags & Headers", "keys|Shortcuts")

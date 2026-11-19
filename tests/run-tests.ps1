@@ -26,6 +26,7 @@ function RunV($m, $a) {
 # Settings go to a throwaway folder - never touches the real %APPDATA%\ILLXL
 $root = Join-Path $env:TEMP ("illxl_test_" + [guid]::NewGuid().ToString('N').Substring(0, 8))
 [void]$xl.Run($tag + "SetSettingsRoot", $root, $true)
+[void]$xl.Run($tag + "UiTestMode", $true)                 # prompts answered by the tests, never shown
 function Check($name, $cond, $detail = '') {
     if ($cond) { $script:pass++; "PASS  $name" } else { $script:fail++; "FAIL  $name  $detail" }
 }

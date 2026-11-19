@@ -163,8 +163,14 @@ Requires Windows, Excel, Python 3, and Excel's *Trust access to the VBA project 
 
 ```powershell
 pwsh -File build.ps1 -Edition Public     # -> build\ILLXL.xlam (Bruce Home preset by default)
-pwsh -File tests\run-tests.ps1            # regression tests in a hidden Excel instance
+pwsh -File install.ps1 -Edition Public   # close Excel first; installs to %APPDATA%\Microsoft\AddIns
+pwsh -File tests\run-tests.ps1            # regression tests (hidden Excel)
+pwsh -File tests\run-matrix.ps1           # every command x 10 kinds of selection + behaviour checks
+pwsh -File tests\keys-live.ps1            # presses every shortcut for real (visible Excel, ~1 min)
+python -I tools\make-pdf.py "Bruce Home" docs\ILLXL_Shortcut_Reference.pdf
 ```
+
+The shortcut PDF is generated from the same command list and preset files the add-in uses, so it can't drift: [docs/ILLXL_Shortcut_Reference.pdf](docs/ILLXL_Shortcut_Reference.pdf).
 
 | Folder | Contents |
 |---|---|
