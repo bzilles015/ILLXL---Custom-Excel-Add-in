@@ -59,10 +59,23 @@ Sub CycleOtherNumbers()
     ApplyFormatCycle "Other", FormatOtherIndex, PrevOtherAddress, "OtherFmt", "Other Numbers Format"
 End Sub
 
+' F01-F05 direct pick (ribbon galleries): apply step i of a cycle. The next
+' key press carries on from the step after it.
+Public Sub ApplyFormatAt(ByVal which As String, ByVal i As Long)
+    Select Case which
+        Case "Num":   ApplyFormatCycle which, FormatNumIndex, PrevNumAddress, "NumFmt", "Number Format", i
+        Case "Date":  ApplyFormatCycle which, FormatDateIndex, PrevDateAddress, "DateFmt", "Date Format", i
+        Case "Pct":   ApplyFormatCycle which, FormatPctIndex, PrevPctAddress, "PctFmt", "Percent Format", i
+        Case "Cur":   ApplyFormatCycle which, FormatCurIndex, PrevCurAddress, "CurFmt", "Currency Format", i
+        Case "Other": ApplyFormatCycle which, FormatOtherIndex, PrevOtherAddress, "OtherFmt", "Other Numbers Format", i
+    End Select
+End Sub
+
 ' Shared engine for F01-F05. The list is looked up after BeginMacroWithUndo,
 ' which loads the preset if needed - so a preset switch applies immediately.
+' pick >= 0 jumps straight to that step (ribbon gallery).
 Private Sub ApplyFormatCycle(ByVal which As String, ByRef index As Integer, ByRef prevAddr As String, _
-                             ByVal logName As String, ByVal undoName As String)
+                             ByVal logName As String, ByVal undoName As String, Optional ByVal pick As Long = -1)
     If TypeName(Selection) <> "Range" Then Exit Sub
     BeginMacroWithUndo
     Dim fmts As Variant, ni As Long
@@ -73,7 +86,12 @@ Private Sub ApplyFormatCycle(ByVal which As String, ByRef index As Integer, ByRe
         Case "Cur":   fmts = cfgCurFormats
         Case "Other": fmts = cfgOtherFormats
     End Select
-    If Selection.Address(False, False) <> prevAddr Then index = 0
+    If pick >= 0 Then
+        If pick > UBound(fmts) Then Exit Sub
+        index = pick
+    ElseIf Selection.Address(False, False) <> prevAddr Then
+        index = 0
+    End If
     prevAddr = Selection.Address(False, False)
     ni = index Mod (UBound(fmts) + 1)
     Selection.NumberFormat = fmts(ni)

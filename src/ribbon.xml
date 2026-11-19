@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ILLXL ribbon tab (Office 2010+ customUI14).
+  - Buttons:  tag = the macro to run; onAction=Rib_Action runs it.
+              getScreentip shows the label plus the ACTIVE preset's shortcut.
+  - Galleries: list the active preset's steps (formats, styles, colors,
+              tags, presets). invalidateContentOnDrop re-reads them every
+              time they open, so a preset switch shows up straight away.
+  - image="x" = assets\icons\x.png (added by build.ps1); imageMso = Office icon.
+-->
+<customUI xmlns="http://schemas.microsoft.com/office/2009/07/customui" onLoad="Rib_OnLoad">
+  <ribbon>
+    <tabs>
+      <tab id="tabILLXL" label="ILLXL" keytip="IL">
+
+        <!-- ============================== ILLXL ============================== -->
+        <group id="gILLXL" label="ILLXL">
+          <button id="btnSettings" label="Settings" size="large" image="logo_L" tag="ShowSettings"
+                  onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Presets, format cycles, colors, fonts, tags and shortcut keys - all in one window."/>
+          <gallery id="galPreset" label="Preset" size="large" image="presets_L" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" screentip="Switch preset"
+                   supertip="Switch every format, color and shortcut to another preset in one click.">
+            <button id="btnPresetSettings" label="Manage presets..." imageMso="FormatCellsDialog"
+                    tag="ShowSettings" onAction="Rib_Action"/>
+          </gallery>
+          <button id="btnPerf" label="Performance Mode" size="large" image="perf_L" tag="TogglePerformanceMode"
+                  onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Manual calc, events and conditional formatting off for heavy formatting. Press again to switch back. Undo is off while it is on."/>
+        </group>
+
+        <!-- ============================== NUMBER ============================== -->
+        <group id="gNumber" label="Number">
+          <gallery id="galNum" label="Number" imageMso="CommaStyle" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleNumberFormat"
+                   getScreentip="Rib_Screentip" supertip="Pick a number format from the cycle."/>
+          <gallery id="galCur" label="Currency" imageMso="AccountingFormat" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleCurrencyFormat"
+                   getScreentip="Rib_Screentip" supertip="Pick a currency format from the cycle."/>
+          <gallery id="galPct" label="Percent" imageMso="PercentStyle" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CyclePercentFormat"
+                   getScreentip="Rib_Screentip" supertip="Pick a percent format from the cycle."/>
+          <gallery id="galDate" label="Date" imageMso="DateAndTimeInsert" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleDateFormat"
+                   getScreentip="Rib_Screentip" supertip="Pick a date format from the cycle."/>
+          <gallery id="galOther" label="Other" image="otherfmt" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleOtherNumbers"
+                   getScreentip="Rib_Screentip" supertip="Year tags (A / B / F / E), quarters and multiples."/>
+          <separator id="sepNum"/>
+          <box id="boxNum1" boxStyle="horizontal">
+            <button id="btnDecUp" imageMso="DecimalsIncrease" showLabel="false" label="Increase Decimals" tag="IncreaseDecimal" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnDecDn" imageMso="DecimalsDecrease" showLabel="false" label="Decrease Decimals" tag="DecreaseDecimal" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnSign" image="sign" showLabel="false" label="Toggle Sign" tag="ToggleSign" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </box>
+          <box id="boxNum2" boxStyle="horizontal">
+            <button id="btnScaleUp" image="scalediv" showLabel="false" label="Divide by 1,000" tag="ScaleUp" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnScaleDn" image="scalemul" showLabel="false" label="Multiply by 1,000" tag="ScaleDown" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </box>
+          <box id="boxNum3" boxStyle="horizontal">
+            <button id="btnDiv100" image="div100" showLabel="false" label="Divide by 100" tag="DivideByHundred" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnMul100" image="mul100" showLabel="false" label="Multiply by 100" tag="MultiplyByHundred" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </box>
+        </group>
+
+        <!-- ============================== STYLES ============================== -->
+        <group id="gStyles" label="Styles">
+          <button id="btnAutoColor" label="Auto-Color" size="large" image="autocolor_L" tag="AutoColorSelection"
+                  onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Color the selection by what each cell holds: hardcodes, formulas, sheet links and file links (colors from your preset)."/>
+          <gallery id="galInput" label="Input Style" size="large" image="inputstyle_L" columns="1" itemWidth="40" itemHeight="20"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label" getItemImage="Gal_Image"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleInputStyle"
+                   getScreentip="Rib_Screentip" supertip="Pick an input style: fill, font color and a dotted border."/>
+          <gallery id="galHeader" label="Header Style" size="large" image="headerstyle_L" columns="1" itemWidth="40" itemHeight="20"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label" getItemImage="Gal_Image"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleHeaderStyle"
+                   getScreentip="Rib_Screentip" supertip="Pick a header style: fill, font color, bold."/>
+          <gallery id="galFill" label="Fill" imageMso="CellFillColorPicker" columns="2" itemWidth="40" itemHeight="20"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label" getItemImage="Gal_Image"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleFill" getScreentip="Rib_Screentip"/>
+          <gallery id="galFontColor" label="Font Color" imageMso="FontColorPicker" columns="2" itemWidth="40" itemHeight="20"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label" getItemImage="Gal_Image"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleFontColor" getScreentip="Rib_Screentip"/>
+          <gallery id="galFont" label="Font" imageMso="FontDialog" columns="1" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleFont" getScreentip="Rib_Screentip"/>
+          <gallery id="galTab" label="Tab Color" image="tabcolor" columns="1" itemWidth="40" itemHeight="20"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label" getItemImage="Gal_Image"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleTabColor" getScreentip="Rib_Screentip"/>
+          <separator id="sepStyles"/>
+          <box id="boxSty1" boxStyle="horizontal">
+            <button id="btnFontUp" imageMso="FontSizeIncrease" showLabel="false" label="Increase Font Size" tag="IncreaseFontSize" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnFontDn" imageMso="FontSizeDecrease" showLabel="false" label="Decrease Font Size" tag="DecreaseFontSize" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnCase" imageMso="ChangeCaseGallery" showLabel="false" label="Cycle Text Case" tag="CycleTextCase" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </box>
+          <box id="boxSty2" boxStyle="horizontal">
+            <button id="btnIndIn" imageMso="IndentIncrease" showLabel="false" label="Indent In" tag="IndentIn" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnIndOut" imageMso="IndentDecrease" showLabel="false" label="Indent Out" tag="IndentOut" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnCenter" imageMso="AlignCenter" showLabel="false" label="Center Across Selection" tag="CenterAcrossSelection" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                    supertip="Centers across the selected cells without merging them."/>
+          </box>
+          <box id="boxSty3" boxStyle="horizontal">
+            <button id="btnStamp" imageMso="DateAndTimeInsert" showLabel="false" label="Insert Timestamp" tag="InsertStaticNow" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </box>
+        </group>
+
+        <!-- ============================== BORDERS ============================== -->
+        <group id="gBorders" label="Borders">
+          <button id="btnOutline" label="Outline + Inside" imageMso="BordersAll" tag="BordersOutlineInside" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnSumBar" label="Sum Bar" imageMso="BorderTop" tag="ApplySumBar" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnDblSum" label="Double Sum Bar" imageMso="BorderTopAndDoubleBottom" tag="ApplyDoubleSumBar" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <menu id="mnuEdges" label="Edge Cycles" imageMso="BorderOutside">
+            <button id="btnEdgeTop" label="Top Edge" imageMso="BorderTop" tag="BorderTop" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnEdgeBottom" label="Bottom Edge" imageMso="BorderBottom" tag="BorderBottom" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnEdgeLeft" label="Left Edge" imageMso="BorderLeft" tag="BorderLeft" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+            <button id="btnEdgeRight" label="Right Edge" imageMso="BorderRight" tag="BorderRight" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          </menu>
+        </group>
+
+        <!-- ============================== FORMULAS ============================== -->
+        <group id="gFormulas" label="Formulas">
+          <button id="btnCAGR" label="CAGR" image="cagr" tag="InsertCAGR" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="=(End/Begin)^(1/n)-1. n = end year minus start year (2023 to 2026 = 3)."/>
+          <button id="btnPctChg" label="% Change" image="pctchg" tag="InsertPercentChange" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="=(Current-Prior)/ABS(Prior), using the two cells to the left."/>
+          <button id="btnGrowth" label="Growth Rate" image="growth" tag="ApplyGrowthRate" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="=Left*(1+rate) across the selection. Type a rate or click a cell."/>
+          <button id="btnEqLeft" label="Equals Left" image="eqleft" tag="EqualsLeft" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnQSum" label="Quick SUM" imageMso="AutoSum" tag="InsertQuickSum" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnQAvg" label="Quick AVERAGE" imageMso="FunctionWizard" tag="InsertQuickAverage" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+        </group>
+
+        <!-- ============================== HEADERS & CHECKS ============================== -->
+        <group id="gHeaders" label="Headers &amp;&amp; Checks">
+          <button id="btnHeaders" label="Insert Headers" image="headers" tag="InsertHeadersFromPrompt" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnVarHdr" label="Variance Headers" image="variance" tag="InsertVarianceHeaders" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnZero" label="Zero-Check" image="zerocheck" tag="ApplyZeroCheckCF" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Green when the cell is 0, red when it isn't - for balance checks."/>
+          <button id="btnZeroClr" label="Clear Zero-Check" image="zeroclear" tag="ClearZeroCheckCF" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+        </group>
+
+        <!-- ============================== UNIT TAGS ============================== -->
+        <group id="gTags" label="Unit Tags">
+          <gallery id="galTagValue" label="Value" image="tagvalue" columns="3" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleUnitTag_Value_Uniform" getScreentip="Rib_Screentip"/>
+          <gallery id="galTagDuration" label="Duration" image="tagduration" columns="2" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleUnitTag_Duration_Uniform" getScreentip="Rib_Screentip"/>
+          <gallery id="galTagRate" label="Rate" image="tagrate" columns="2" showItemImage="false"
+                   invalidateContentOnDrop="true" getItemCount="Gal_Count" getItemLabel="Gal_Label"
+                   getItemScreentip="Gal_Screentip" onAction="Gal_Action" tag="CycleUnitTag_Rate_Uniform" getScreentip="Rib_Screentip"/>
+          <button id="btnTagRemove" label="Remove Tag" image="tagremove" tag="RemoveUnitTag" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+        </group>
+
+        <!-- ============================== TOOLS ============================== -->
+        <group id="gTools" label="Tools">
+          <button id="btnAbs" label="Absolute Refs" image="refabs" tag="MakeRefsAbsolute" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnRel" label="Relative Refs" image="refrel" tag="MakeRefsRelative" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnNextBlank" label="Next Blank" imageMso="GoTo" tag="GoToNextBlank" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnNextErr" label="Next Error" imageMso="TraceError" tag="GoToNextError" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnErrChk" label="Error Checking" imageMso="ErrorChecking" tag="ToggleErrorChecking" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Hide or show the green error triangles - for presentation-ready sheets."/>
+          <button id="btnCleanStyles" label="Clean Up Styles" image="cleanstyles" tag="RemoveUnusedStyles" onAction="Rib_Action" getScreentip="Rib_Screentip"
+                  supertip="Delete custom cell styles that no cell uses (asks first)."/>
+        </group>
+
+      </tab>
+    </tabs>
+  </ribbon>
+</customUI>

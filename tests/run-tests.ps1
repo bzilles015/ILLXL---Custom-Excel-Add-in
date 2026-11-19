@@ -221,6 +221,30 @@ try {
     Sel $s1 "U7"; Run "ApplyInputNexcess"
     Check "ApplyInputNexcess by name" ($s1.Range("U7").Interior.Color -eq 13434879) $s1.Range("U7").Interior.Color
 
+    # --- Ribbon galleries (the logic behind each dropdown) ----------------------
+    Check "Ribbon: number gallery lists 5 steps" ((RunV "GalleryCount" "galNum") -eq 5)
+    $xl.Run($tag + "GalleryLabel", "galNum", 0) | ForEach-Object { $lbl = $_ }
+    Check "Ribbon: number gallery shows a formatted sample" ($lbl -match '1,234,568') $lbl
+    $s1.Range("Y1").Value2 = 1234567
+    Sel $s1 "Y1"; [void]$xl.Run($tag + "GalleryPick", "galNum", 2)
+    Check "Ribbon: pick applies step 3" ($s1.Range("Y1").NumberFormat -eq '_(* #,##0,"K"_);_(* (#,##0,"K");_(* "-"_);_(@_)') $s1.Range("Y1").NumberFormat
+    Run "CycleNumberFormat"
+    Check "Ribbon: next key press continues at step 4" ($s1.Range("Y1").NumberFormat -eq '_(* #,##0.0,,_);_(* (#,##0.0,,);_(* "-"_);_(@_)') $s1.Range("Y1").NumberFormat
+    Sel $s1 "Y3"; [void]$xl.Run($tag + "GalleryPick", "galInput", 1)
+    Check "Ribbon: input style pick (Bruce Input fill)" ($s1.Range("Y3").Interior.Color -eq 13431551) $s1.Range("Y3").Interior.Color
+    Run "UndoLastAction"
+    Check "Ribbon: gallery pick is undoable" ($s1.Range("Y3").Interior.ColorIndex -eq $NONE)
+    Sel $s1 "Y5"; [void]$xl.Run($tag + "GalleryPick", "galTagValue", 2)
+    Check "Ribbon: tag pick" ($s1.Range("Y5").Value2 -eq '[$]') $s1.Range("Y5").Value2
+    $sw = $xl.Run($tag + "GallerySwatchFile", "galFill", 1)
+    Check "Ribbon: color swatch drawn" ((Test-Path $sw) -and (Get-Item $sw).Length -gt 2000) $sw
+    $sw2 = $xl.Run($tag + "GallerySwatchFile", "galFill", 0)
+    Check "Ribbon: 'none' swatch drawn" ($sw2 -match '_none_') $sw2
+    $plabels = 0..((RunV "GalleryCount" "galPreset") - 1) | ForEach-Object { $xl.Run($tag + "GalleryLabel", "galPreset", $_) }
+    Check "Ribbon: preset gallery marks only the active one" ((@($plabels | Where-Object { $_ -match 'active' }).Count -eq 1) -and
+        (@($plabels | Where-Object { $_ -match '^Nexcess.*active' }).Count -eq 1)) ($plabels -join ' | ')
+    Check "Ribbon: tooltip shows the preset's key" ((RunV "ScreentipFor" "CycleNumberFormat") -match 'Ctrl\+Shift\+1') (RunV "ScreentipFor" "CycleNumberFormat")
+
     # --- Settings window: drive every page without showing it ------------------
     $uiRoot = "$root\ui"
     [void]$xl.Run($tag + "SetSettingsRoot", $uiRoot, $true); [void]$xl.Run($tag + "LoadSettings")

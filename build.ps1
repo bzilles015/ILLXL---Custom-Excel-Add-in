@@ -83,3 +83,7 @@ try {
 } finally {
     $xl.Quit(); [void][Runtime.InteropServices.Marshal]::ReleaseComObject($xl); $xl = $null; [GC]::Collect(); [GC]::WaitForPendingFinalizers()   # let Excel exit
 }
+
+# --- ribbon tab: added to the saved package (Excel can't do this itself) -----------
+python -I "$PSScriptRoot\tools\inject_ribbon.py" $Out "$PSScriptRoot\src\ribbon.xml" "$PSScriptRoot\assets\icons"
+if ($LASTEXITCODE -ne 0) { throw "ribbon injection failed" }

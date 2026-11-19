@@ -18,3 +18,7 @@ build/
 
 # Screenshots made by tests\screenshots.ps1
 tests/screens/
+
+# Logo concept sheets (review only)
+tools/concepts.png
+tools/icons-sheet.png

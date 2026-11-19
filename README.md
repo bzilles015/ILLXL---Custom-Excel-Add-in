@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/logo-256.png" width="128" alt="ILLXL logo"></p>
+
 # ILLXL
 ### The Illest Excel Add-In for Finance Pros
 
@@ -22,6 +24,13 @@ Tired of paying $125–200/year for WSP Boost, WST Macros, or Macabacus? ILLXL i
 ### What's New in the Source (next release)
 
 The `ILLXL.xlam` download is still the March 2026 build. The code in `src/` adds:
+
+![The ILLXL ribbon tab](assets/ribbon.png)
+
+- **ILLXL ribbon tab** - every command one click away. Dropdowns list the actual steps of each cycle (formats shown as live samples, styles and colors as swatches), and every tooltip shows the shortcut from your active preset.
+- **Settings window** (`Ctrl+Alt+Shift+S`) - edit presets, format cycles, colors, fonts, tags and shortcut keys without touching a file. Formats are checked as you type; shortcut conflicts are caught before they happen.
+
+![The Settings window](assets/settings.png)
 
 - **Presets** - every format cycle, color convention, input/header style and shortcut key now lives in a plain-text `.ini` file. Switch your whole setup in one step, share a preset with a colleague, or edit it in Notepad. Ships with **Bruce Home** (the original ILLXL style), **Banker** (standard IB / WSP conventions) and **Nexcess** (corporate FP&A). Up to 3 presets; `Ctrl+Alt+Shift+S` to switch.
 - **Undo restores formatting** - Ctrl+Z now brings back fills, fonts, borders, number formats and conditional formatting, and always lands on the right sheet.

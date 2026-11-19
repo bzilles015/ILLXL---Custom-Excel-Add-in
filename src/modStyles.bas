@@ -154,6 +154,13 @@ Sub CycleFill()
     PrevFillAddress = Selection.Address(False, False)
     Dim ni As Long
     ni = FillCycleIndex Mod (UBound(cfgFills) + 1)
+    PaintFill ni
+    FillCycleIndex = FillCycleIndex + 1
+    LogAction "FillCyc" & (ni + 1), PrevFillAddress
+    RegisterUndo "Fill Cycle"
+End Sub
+
+Private Sub PaintFill(ByVal ni As Long)
     Select Case cfgFills(ni).Color
         Case CLR_NONE
             Selection.Interior.Pattern = xlNone
@@ -169,9 +176,6 @@ Sub CycleFill()
                 .Color = cfgFills(ni).Color
             End With
     End Select
-    FillCycleIndex = FillCycleIndex + 1
-    LogAction "FillCyc" & (ni + 1), PrevFillAddress
-    RegisterUndo "Fill Cycle"
 End Sub
 
 '------------------------------------------------------------------------------
@@ -595,17 +599,77 @@ Sub CycleTabColor()
     If ActiveSheet.Name <> prev Then idx = 0
     prev = ActiveSheet.Name
 
-    With cfgTabColors(idx Mod (UBound(cfgTabColors) + 1))
-        If .Color = CLR_NONE Then
-            ActiveSheet.Tab.ColorIndex = xlColorIndexNone
-        Else
-            ActiveSheet.Tab.Color = .Color
-        End If
-    End With
-
+    PaintTab idx Mod (UBound(cfgTabColors) + 1)
     idx = idx + 1
     RegisterUndo "Tab Color"
 End Sub
+
+Private Sub PaintTab(ByVal ni As Long)
+    If cfgTabColors(ni).Color = CLR_NONE Then
+        ActiveSheet.Tab.ColorIndex = xlColorIndexNone
+    Else
+        ActiveSheet.Tab.Color = cfgTabColors(ni).Color
+    End If
+End Sub
+
+'==============================================================================
+' DIRECT PICKS  (ribbon galleries)
+'==============================================================================
+' Apply one step of a cycle by its position in the active preset's list.
+' Undoable like every other macro; where the cycle tracks its position, the
+' next key press carries on from the step after this one.
+'==============================================================================
+Public Sub ApplyFillAt(ByVal i As Long)
+    If Not StartPick(i, UBound(cfgFills)) Then Exit Sub
+    PaintFill i
+    FillCycleIndex = i + 1: PrevFillAddress = Selection.Address(False, False)
+    RegisterUndo "Fill"
+End Sub
+
+Public Sub ApplyFontColorAt(ByVal i As Long)
+    If Not StartPick(i, UBound(cfgFontColors)) Then Exit Sub
+    Selection.Font.Color = cfgFontColors(i).Color
+    FontColorCycleIndex = i + 1: PrevFontColorAddress = Selection.Address(False, False)
+    RegisterUndo "Font Color"
+End Sub
+
+Public Sub ApplyFontAt(ByVal i As Long)
+    If Not StartPick(i, UBound(cfgFonts)) Then Exit Sub
+    On Error Resume Next
+    Selection.Font.Name = cfgFonts(i)
+    If Err.Number <> 0 Then MsgBox "Font '" & cfgFonts(i) & "' is not installed.", vbInformation, "ILLXL"
+    On Error GoTo 0
+    FontCycleIndex = i + 1: PrevFontAddress = Selection.Address(False, False)
+    RegisterUndo "Font"
+End Sub
+
+Public Sub ApplyInputAt(ByVal i As Long)
+    If Not StartPick(i, UBound(cfgInputStyles)) Then Exit Sub
+    ApplyInputStyle Selection, cfgInputStyles(i)
+    RegisterUndo "Input " & cfgInputStyles(i).Name
+End Sub
+
+Public Sub ApplyHeaderAt(ByVal i As Long)
+    If Not StartPick(i, UBound(cfgHeaderStyles)) Then Exit Sub
+    ApplyHeaderStyle Selection, cfgHeaderStyles(i).Fill, cfgHeaderStyles(i).Font
+    RegisterUndo "Header " & cfgHeaderStyles(i).Name
+End Sub
+
+Public Sub ApplyTabColorAt(ByVal i As Long)
+    EnsureSettings
+    If i < 0 Or i > UBound(cfgTabColors) Then Exit Sub
+    BeginMacroWithUndo ActiveCell
+    PaintTab i
+    RegisterUndo "Tab Color"
+End Sub
+
+' Common start: a range is selected, the index is in range, undo snapshot taken
+Private Function StartPick(ByVal i As Long, ByVal maxIndex As Long) As Boolean
+    If TypeName(Selection) <> "Range" Then Exit Function
+    If i < 0 Or i > maxIndex Then Exit Function
+    BeginMacroWithUndo
+    StartPick = True
+End Function
 
 
 

@@ -145,6 +145,7 @@ Public Sub ApplyPreset(ByVal presetName As String)
     UnbindAllKeys                                   ' release the old preset's keys first
     LoadSettings
     BindAllKeys
+    RefreshRibbon                                   ' tooltips show the new keys
     FlashStatus "ILLXL preset: " & ActivePreset
 End Sub
 

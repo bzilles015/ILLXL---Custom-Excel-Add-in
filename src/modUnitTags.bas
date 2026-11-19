@@ -75,13 +75,32 @@ Public Sub RemoveUnitTag()
     RegisterUndo "Remove Unit Tag"
 End Sub
 
+'------------------------------------------------------------------------------
+' U05 - ApplyTagAt  (ribbon galleries) - put one specific tag on the selection.
+'     which = "Value", "Duration" or "Rate"; i = position in that list.
+'------------------------------------------------------------------------------
+Public Sub ApplyTagAt(ByVal which As String, ByVal i As Long)
+    Dim tags As Variant
+    EnsureSettings
+    Select Case which
+        Case "Value":    tags = cfgTagsValue
+        Case "Duration": tags = cfgTagsDuration
+        Case "Rate":     tags = cfgTagsRate
+        Case Else:       Exit Sub
+    End Select
+    If i < 0 Or i > UBound(tags) Then Exit Sub
+    ApplyUniformTagCycle tags, "UnitTag_Pick", CStr(tags(i))
+End Sub
+
 '================ CORE LOGIC ================
 
 '------------------------------------------------------------------------------
 ' ApplyUniformTagCycle - Core cycling logic
 ' IMPROVEMENT: Added screen updating control and better empty cell handling
+'     forcedTag (ribbon pick) skips the cycling and applies that tag.
 '------------------------------------------------------------------------------
-Private Sub ApplyUniformTagCycle(ByVal tags As Variant, ByVal actionName As String)
+Private Sub ApplyUniformTagCycle(ByVal tags As Variant, ByVal actionName As String, _
+                                 Optional ByVal forcedTag As String = "")
     If TypeName(Selection) <> "Range" Then Exit Sub
     BeginMacroWithUndo
 
@@ -93,7 +112,9 @@ Private Sub ApplyUniformTagCycle(ByVal tags As Variant, ByVal actionName As Stri
     ' 2) Compute next tag for ENTIRE selection
     Dim n As Long, nextTag As String
     n = UBound(tags) - LBound(tags) + 1
-    If idx = -1 Then
+    If Len(forcedTag) > 0 Then
+        nextTag = forcedTag
+    ElseIf idx = -1 Then
         nextTag = CStr(tags(LBound(tags)))
     Else
         nextTag = CStr(tags((idx - LBound(tags) + 1) Mod n + LBound(tags)))
