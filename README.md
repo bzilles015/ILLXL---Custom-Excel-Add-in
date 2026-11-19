@@ -21,9 +21,9 @@ Tired of paying $125–200/year for WSP Boost, WST Macros, or Macabacus? ILLXL i
 | **modBorders** | Cycle individual borders, apply outline + inside, sum bars |
 | **modUnitTags** | Cycle FAST-standard unit tags ([mln $], [%], [x], [bps], etc.) |
 
-### What's New in the Source (next release)
+### What's New in v2.0
 
-The `ILLXL.xlam` download is still the March 2026 build. The code in `src/` adds:
+A ground-up rebuild of the March 2026 release:
 
 ![The ILLXL ribbon tab](assets/ribbon.png)
 
@@ -55,7 +55,7 @@ The `ILLXL.xlam` download is still the March 2026 build. The code in `src/` adds
 
 ## Installation
 
-1. Download `ILLXL.xlam` from this repo
+1. Download `ILLXL.xlam` from the [latest release](https://github.com/bzilles015/ILLXL---Custom-Excel-Add-in/releases/latest)
 2. Open Excel → **File → Options → Add-ins**
 3. At the bottom, set **Manage: Excel Add-ins** → click **Go...**
 4. Click **Browse**, navigate to `ILLXL.xlam`, click OK
@@ -67,95 +67,114 @@ Shortcuts load automatically every time Excel opens.
 
 ## Keyboard Shortcuts
 
+Default keys (every key can be changed in **Settings > Shortcuts**). Everything is also on the **ILLXL** ribbon tab.
+
 📄 **[Download the full shortcut reference PDF](ILLXL_Shortcut_Reference.pdf)**
 
-### modCore — Utilities
-| Shortcut | Action |
-|---|---|
-| Ctrl+Alt+Shift+M | Toggle Performance Mode |
-| Ctrl+Alt+Shift+A | Make References Absolute ($A$1) |
-| Ctrl+Alt+Shift+R | Make References Relative (A1) |
-| Ctrl+Alt+Shift+N | Go To Next Blank in Selection |
-| Ctrl+Alt+Shift+E | Go To Next Error in Selection |
-| Ctrl+Alt+Shift+L | Break External Links (convert to values) |
+### Core
+*Settings, performance mode, navigation and formula references.*
 
-### modFormatCycles — Number Formats
-| Shortcut | Action |
-|---|---|
-| Ctrl+Shift+1 | Cycle Number Format (#,##0 → K → M) |
-| Ctrl+Shift+3 | Cycle Date Format (m/d/yyyy → m/d/yy → mmm-yy → d-mmm-yy) |
-| Ctrl+Shift+4 | Cycle Currency Format ($#,##0 → $K → $M) |
-| Ctrl+Shift+5 | Cycle Percent Format (0.0% → 0% → +/- → ...) |
-| Ctrl+Shift+8 | Cycle Other Formats (A=Actual / B=Budget / F=Forecast / Q / P / E / x) |
-| Ctrl+Shift+> | Increase Decimal Places |
-| Ctrl+Shift+< | Decrease Decimal Places |
-| Alt+Shift+< | Scale Up ÷1,000 |
-| Alt+Shift+> | Scale Down ×1,000 |
-| Ctrl+Alt+Shift+\ | Toggle Sign (positive ↔ negative) |
-| Ctrl+Alt+2 | Divide by 100 (5 → 0.05) |
-| Ctrl+Alt+Shift+2 | Multiply by 100 (0.05 → 5) |
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Alt+Shift+S` | **ILLXL Settings / Presets** | Open the Settings window: presets, cycles, colors, fonts, tags and shortcut keys. |
+| `Ctrl+Alt+Shift+M` | **Toggle Performance Mode** | Manual calc, events and conditional formatting off for heavy formatting. Press again to switch back. Undo is off while it is on. |
+| `Ctrl+Alt+Shift+A` | **Make References Absolute** | Turn A1 into $A$1 in every formula in the selection. |
+| `Ctrl+Alt+Shift+R` | **Make References Relative** | Turn $A$1 into A1 in every formula in the selection. |
+| `Ctrl+Alt+Shift+N` | **Go To Next Blank Cell** | Jump to the next empty cell in the selection. |
+| `Ctrl+Alt+Shift+E` | **Go To Next Error Cell** | Jump to the next #REF!, #N/A, #DIV/0! ... in the selection. |
+| `Ctrl+Alt+Shift+K` | **Toggle Error Checking** | Hide or show Excel's green error triangles - for presentation-ready sheets. |
+| - | **Remove Unused Cell Styles** | Delete custom cell styles that no cell uses (asks first). |
+| - | **Check for Updates** | See whether a newer ILLXL is out on GitHub. |
 
-### modFormulas — Formula Tools
-| Shortcut | Action |
-|---|---|
-| Ctrl+Alt+Shift+C | Insert CAGR — n = end year minus start year (2023→2026 = 3) |
-| Ctrl+Alt+Shift+W | Insert % Change =(Current−Prior)/ABS(Prior) |
-| Ctrl+Alt+D | Equals Left — link each cell to the cell on its left |
-| Ctrl+Alt+Shift+G | Apply Growth Rate =LEFT×(1+rate) |
-| Ctrl+Alt+= | Quick SUM |
-| Ctrl+Alt+Shift+= | Quick Average |
+### Number Formats
+*Cycle formats - press again for the next step. Restarts when the selection changes.*
 
-### modStyles — Colors, Fonts & Layout
-| Shortcut | Action |
-|---|---|
-| Ctrl+Alt+A | Auto-Color entire selection |
-| Ctrl+' | Cycle Font (Aptos Narrow → Poppins → Times New Roman) |
-| Ctrl+Shift+K | Cycle Fill Color |
-| Ctrl+Alt+Shift+I | Cycle Text Case (Title → lower → UPPER) |
-| Ctrl+Shift+C | Cycle Font Color |
-| Ctrl+Shift+F | Increase Font Size |
-| Ctrl+Shift+G | Decrease Font Size |
-| Ctrl+Alt+> | Indent In |
-| Ctrl+Alt+< | Indent Out |
-| Ctrl+Alt+E | Center Across Selection (no more Merge & Center) |
-| Ctrl+Shift+N | Insert Static Timestamp |
-| Ctrl+Alt+Shift+U | Cycle Input Style (Yellow → Lt Yellow → Gray → Peach → Pale Blue) |
-| Ctrl+Alt+Shift+H | Cycle Header Style |
-| Ctrl+Alt+Shift+Y | Insert Headers from Prompt |
-| Ctrl+Alt+Shift+D | Insert Variance Headers (AvF % / AvB % / Var AvB) |
-| Ctrl+Alt+Shift+Z | Apply Zero-Check CF |
-| Ctrl+Alt+Shift+X | Clear Zero-Check CF |
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Shift+1` | **Cycle Number Format** | Step through the number formats in your preset (e.g. 1,234 -> 1K -> 1.2M). |
+| `Ctrl+Shift+3` | **Cycle Date Format** | Step through the date formats in your preset. |
+| `Ctrl+Shift+4` | **Cycle Currency Format** | Step through the currency formats in your preset. |
+| `Ctrl+Shift+5` | **Cycle Percent Format** | Step through the percent formats in your preset. |
+| `Ctrl+Shift+8` | **Cycle Other Formats (A/B/F/Q/x)** | Year tags (2026A / B / F / E), quarters and multiples (12.5x). |
+| `Ctrl+Shift+.` | **Increase Decimals** | One more decimal place - works on custom formats too. |
+| `Ctrl+Shift+,` | **Decrease Decimals** | One less decimal place - works on custom formats too. |
+| `Alt+Shift+<` | **Divide by 1,000** | Divide numbers by 1,000; formulas become =(...)/1000. |
+| `Alt+Shift+>` | **Multiply by 1,000** | Multiply numbers by 1,000; formulas become =(...)*1000. |
+| `Ctrl+Alt+Shift+\` | **Toggle Sign** | Flip positive <-> negative; formulas are wrapped as =-(...) and unwrapped again. |
+| `Ctrl+Alt+2` | **Divide by 100** | Divide by 100 (5 -> 0.05) for entering percentages. |
+| `Ctrl+Alt+Shift+2` | **Multiply by 100** | Multiply by 100 (0.05 -> 5). |
 
-### modBorders — Border Cycles
-| Shortcut | Action |
-|---|---|
-| Ctrl+Alt+Shift+↑ | Cycle Top Border (Thin → None → Medium → Hairline) |
-| Ctrl+Alt+Shift+↓ | Cycle Bottom Border |
-| Ctrl+Alt+Shift+← | Cycle Left Border |
-| Ctrl+Alt+Shift+→ | Cycle Right Border |
-| Ctrl+Alt+Shift+B | Outline (Medium) + Inside (Thin) |
-| Ctrl+Alt+− | Apply Sum Bar |
-| Ctrl+Alt+_ | Apply Double Sum Bar |
+### Formulas
+*Financial formulas in one keystroke. Picked cells can be on any sheet.*
 
-### modUnitTags — Unit Tags
-| Shortcut | Action |
-|---|---|
-| Ctrl+Alt+Shift+T | Cycle Value Tag: [#] [%] [mln $] [thd $] [bn $] [x] [pp] [bps] |
-| Ctrl+Alt+Shift+O | Cycle Duration Tag: [d] [m] [q] [y] |
-| Ctrl+Alt+Shift+P | Cycle Rate Tag: [%/y] [$/unit] [$/FTE] [$/yr] |
-| Ctrl+Alt+Shift+Backspace | Remove Last Unit Tag |
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Alt+Shift+C` | **Insert CAGR** | =(End/Begin)^(1/n)-1. Pick the two cells; n = end year minus start year. |
+| `Ctrl+Alt+Shift+V` | **Insert % Change** | =(Current-Prior)/ABS(Prior), using the two cells to the left. |
+| `Ctrl+Alt+L` | **Equals Left** | Link each selected cell to the cell on its left. |
+| `Ctrl+Alt+Shift+G` | **Apply Growth Rate** | =Left*(1+rate) across the selection. Type a rate or click the cell that holds it. |
+| `Ctrl+Alt+=` | **Quick SUM** | Pick a range (any sheet) and SUM it into the selected cell. |
+| `Ctrl+Alt+Shift+=` | **Quick AVERAGE** | Pick a range (any sheet) and AVERAGE it into the selected cell. |
 
----
+### Styles & Layout
+*Colors, fonts, input and header styles, indent, headers and checks.*
 
-## Input Style Reference
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Alt+A` | **Auto-Color (inputs / formulas / links)** | Color cells by what they hold: hardcodes, formulas, same-sheet, other-sheet and other-file links (colors from your preset). |
+| `Ctrl+'` | **Cycle Font** | Step through the fonts in your preset. |
+| `Ctrl+Shift+K` | **Cycle Fill** | Step through the fill colors in your preset. |
+| `Ctrl+Alt+Shift+I` | **Cycle Text Case** | Title Case -> lower case -> UPPER CASE (typed text only, never formulas). |
+| `Ctrl+Shift+C` | **Cycle Font Color** | Step through the font colors in your preset. |
+| `Ctrl+Shift+F` | **Increase Font Size** | Font one point bigger (mixed sizes each step from their own size). |
+| `Ctrl+Shift+G` | **Decrease Font Size** | Font one point smaller. |
+| `Ctrl+Alt+.` | **Indent In** | Indent one level (left-aligns so the indent shows). |
+| `Ctrl+Alt+,` | **Indent Out** | Remove one indent level. |
+| `Ctrl+Alt+E` | **Center Across Selection** | Center across the selected cells without merging them. |
+| `Ctrl+Shift+N` | **Insert Timestamp** | Stamp the current date and time as a value; press again for the next format. |
+| `Ctrl+Alt+Shift+U` | **Cycle Input Style** | Step through the input styles in your preset (fill, font color, dotted border). |
+| `Ctrl+Alt+Shift+H` | **Cycle Header Style** | Step through the header styles in your preset (fill, font color, bold). |
+| `Ctrl+Alt+Shift+Y` | **Insert Headers** | Type headers like 2024A,2025B,2026E and they fill across, styled. |
+| `Ctrl+Alt+Shift+D` | **Insert Variance Headers** | Insert the variance header labels from your preset, styled. |
+| `Ctrl+Alt+Shift+Z` | **Apply Zero-Check** | Green when the cell is 0, red when it isn't - for balance checks. |
+| `Ctrl+Alt+Shift+X` | **Clear Zero-Check** | Remove ILLXL's zero-check formatting from the selection. |
+| `Ctrl+Alt+Shift+W` | **Cycle Tab Color** | Step the sheet tab through the tab colors in your preset. |
 
-| Step | Style | Fill | Font | Use Case |
-|---|---|---|---|---|
-| 1 | Yellow | #FFF2CC | Blue | Primary hardcoded assumptions |
-| 2 | Light Yellow | #FFFFCC | Blue | Secondary / supporting assumptions |
-| 3 | Gray | #D9D9D9 | Blue | Linked / locked cells |
-| 4 | Peach | #FFC799 | Teal | Special flagged inputs |
-| 5 | Pale Blue | #DDEBF7 | Dark Blue | Override cells |
+### Borders
+*Edge cycles restart at step 1 when the selection changes.*
+
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Alt+Shift+Up` | **Cycle Top Border** | Step the top edge through your border cycle (e.g. thin -> none -> medium -> hairline). |
+| `Ctrl+Alt+Shift+Down` | **Cycle Bottom Border** | Step the bottom edge through your border cycle. |
+| `Ctrl+Alt+Shift+Left` | **Cycle Left Border** | Step the left edge through your border cycle. |
+| `Ctrl+Alt+Shift+Right` | **Cycle Right Border** | Step the right edge through your border cycle. |
+| `Ctrl+Alt+Shift+B` | **Outline + Inside Borders** | Medium outline with thin inside lines. |
+| `Ctrl+Alt+-` | **Sum Bar** | Thin line above the totals row. |
+| `Ctrl+Alt+_` | **Double Sum Bar** | Thin line above and double line below - for grand totals. |
+
+### Unit Tags
+*FAST-standard tags. Typed text only - formulas are never touched.*
+
+| Shortcut | Command | What it does |
+|---|---|---|
+| `Ctrl+Alt+Shift+T` | **Cycle Value Tag** | Add or cycle a value tag: [#] [%] [$] [mln $] ... (FAST standard). |
+| `Ctrl+Alt+Shift+O` | **Cycle Duration Tag** | Add or cycle a duration tag: [d] [m] [q] [y]. |
+| `Ctrl+Alt+Shift+P` | **Cycle Rate Tag** | Add or cycle a rate tag: [%/y] [$/unit] [$/FTE] [$/yr]. |
+| `Ctrl+Alt+Shift+Backspace` | **Remove Unit Tag** | Remove the last [...] tag from each selected cell. |
+
+### Model Tools
+*Audit a model, wrap formulas, build an index, and get a model ready to send.*
+
+| Shortcut | Command | What it does |
+|---|---|---|
+| - | **Find Hardcodes in Formulas** | Select every formula with a typed-in number (=A1*1.05). Works on the selection, or the whole sheet when one cell is selected. |
+| - | **Find Inconsistent Formulas** | Select formulas that break the pattern of the formulas beside them in their row. |
+| - | **External Link Report** | List every cell and name that links to another file, each with a link to jump to it. |
+| `Ctrl+Alt+Shift+Home` | **Ready to Send** | Every sheet back to its first cell below the freeze panes (or A1), first sheet shown - before you send a model. |
+| `Ctrl+Alt+Shift+F` | **Wrap / Unwrap IFERROR** | Wrap the selected formulas in IFERROR(...,0); press again to take it off. The fallback value is in your preset. |
+| - | **Wrap / Unwrap ROUND** | Wrap the selected formulas in ROUND(...,0); press again to take it off. Digits are in your preset. |
+| - | **Sheet Index** | Add (or refresh) a hyperlinked table of contents at the front of the workbook. |
 
 ---
 
