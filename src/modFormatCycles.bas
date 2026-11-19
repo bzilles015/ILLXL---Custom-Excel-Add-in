@@ -13,123 +13,73 @@ Option Explicit
 '   Number/date/percent/currency/other cycles, decimals, scale, and sign toggle.
 '
 ' Bound shortcuts (see modBindings):
-'   F01 � CycleNumberFormat      Ctrl+Shift+1
-'   F02 � CycleDateFormat        Ctrl+Shift+3
-'   F03 � CyclePercentFormat     Ctrl+Shift+5
-'   F04 � CycleCurrencyFormat    Ctrl+Shift+4
-'   F05 � CycleOtherNumbers      Ctrl+Shift+8
-'   F06 � IncreaseDecimal        Ctrl+Shift+.
-'   F07 � DecreaseDecimal        Ctrl+Shift+,
-'   F08 � ScaleUp                Alt+Shift+<
-'   F09 � ScaleDown              Alt+Shift+>
-'   F10 � ToggleSign             Ctrl+Alt+Shift+\
-'   F11 � DivideByHundred        Ctrl+Alt+2
-'   F12 � MultiplyByHundred      Ctrl+Alt+Shift+2
+'   F01 - CycleNumberFormat      Ctrl+Shift+1
+'   F02 - CycleDateFormat        Ctrl+Shift+3
+'   F03 - CyclePercentFormat     Ctrl+Shift+5
+'   F04 - CycleCurrencyFormat    Ctrl+Shift+4
+'   F05 - CycleOtherNumbers      Ctrl+Shift+8
+'   F06 - IncreaseDecimal        Ctrl+Shift+.
+'   F07 - DecreaseDecimal        Ctrl+Shift+,
+'   F08 - ScaleUp                Alt+Shift+<
+'   F09 - ScaleDown              Alt+Shift+>
+'   F10 - ToggleSign             Ctrl+Alt+Shift+\
+'   F11 - DivideByHundred        Ctrl+Alt+2
+'   F12 - MultiplyByHundred      Ctrl+Alt+Shift+2
 '==============================================================================
 
 '------------------------------------------------------------------------------
+' F01-F05 - Format cycles
+'     Each press applies the next format from the active preset's list
+'     ([NumberFormats], [DateFormats], ... in the .ini). The cycle restarts
+'     at step 1 whenever the selection changes.
+'------------------------------------------------------------------------------
+
 ' F01 CycleNumberFormat  (Ctrl+Shift+1)
-'------------------------------------------------------------------------------
 Sub CycleNumberFormat()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    If Selection.Address(False, False) <> PrevNumAddress Then FormatNumIndex = 0
-    PrevNumAddress = Selection.Address(False, False)
-    Dim fmts As Variant, ni As Long
-    fmts = Array( _
-      "#,##0_);(#,##0);""--"";@", _
-      "#,##0,_);(#,##0,);""--"";@", _
-      "#,##0,""K""_);(#,##0,""K"");""--"";@", _
-      "#,##0.0,,_);(#,##0.0,,);""--"";@", _
-      "#,##0.0,,""M""_);(#,##0.0,,""M"");""--"";@" _
-    )
-    ni = FormatNumIndex Mod (UBound(fmts) + 1)
-    Selection.NumberFormat = fmts(ni)
-    FormatNumIndex = FormatNumIndex + 1
-    LogAction "NumFmt" & (ni + 1), PrevNumAddress
-    RegisterUndo "Number Format"
+    ApplyFormatCycle "Num", FormatNumIndex, PrevNumAddress, "NumFmt", "Number Format"
 End Sub
 
-'------------------------------------------------------------------------------
 ' F02 CycleDateFormat  (Ctrl+Shift+3)
-'------------------------------------------------------------------------------
 Sub CycleDateFormat()
-    BeginMacroWithUndo
-    If Selection.Address(False, False) <> PrevDateAddress Then FormatDateIndex = 0
-    PrevDateAddress = Selection.Address(False, False)
-    Dim dates As Variant, ni As Long
-    dates = Array("m/d/yyyy", "m/d/yy", "yyyy-mm-dd", "mmm-yy", "d-mmm-yy;d-mmm-yy;-")
-    ni = FormatDateIndex Mod (UBound(dates) + 1)
-    Selection.NumberFormat = dates(ni)
-    FormatDateIndex = FormatDateIndex + 1
-    LogAction "DateFmt" & (ni + 1), PrevDateAddress
-    RegisterUndo "Date Format"
+    ApplyFormatCycle "Date", FormatDateIndex, PrevDateAddress, "DateFmt", "Date Format"
 End Sub
 
-'------------------------------------------------------------------------------
 ' F03 CyclePercentFormat  (Ctrl+Shift+5)
-'------------------------------------------------------------------------------
 Sub CyclePercentFormat()
-    On Error GoTo CleanFail
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    If Selection.Address(False, False) <> PrevPctAddress Then FormatPctIndex = 0
-    PrevPctAddress = Selection.Address(False, False)
-    Dim fmts(1 To 5) As String
-    fmts(1) = "0.0%;(0.0%);""�"";@"
-    fmts(2) = "0%;(0%);""�"";@"
-    fmts(3) = "+0.0%;-0.0%;""�"";@"
-    fmts(4) = "[<=-0.0005](0.0%);[>=0.0005]0.0%;"""";@"
-    fmts(5) = "0.0%;(0.0%);"""";@"
-    Dim ni As Long
-    ni = (FormatPctIndex Mod UBound(fmts)) + 1
-    Selection.NumberFormat = fmts(ni)
-    FormatPctIndex = FormatPctIndex + 1
-    LogAction "PctFmt:" & CStr(ni), PrevPctAddress
-    RegisterUndo "Percent Format"
-CleanExit:
-    Exit Sub
-CleanFail:
-    Resume CleanExit
+    ApplyFormatCycle "Pct", FormatPctIndex, PrevPctAddress, "PctFmt", "Percent Format"
 End Sub
 
-'------------------------------------------------------------------------------
 ' F04 CycleCurrencyFormat  (Ctrl+Shift+4)
-'------------------------------------------------------------------------------
 Sub CycleCurrencyFormat()
-    If TypeName(Selection) <> "Range" Then Exit Sub
-    BeginMacroWithUndo
-    If Selection.Address(False, False) <> PrevCurAddress Then FormatCurIndex = 0
-    PrevCurAddress = Selection.Address(False, False)
-    Dim fmts As Variant, ni As Long
-    fmts = Array( _
-      "$#,##0_);($#,##0);""--"";@", _
-      "$#,##0,_);($#,##0,);""--"";@", _
-      "$#,##0,""K""_);($#,##0,""K"");""--"";@", _
-      "$#,##0.0,,_);($#,##0.0,,);""--"";@", _
-      "$#,##0.0,,""M""_);($#,##0.0,,""M"");""--"";@" _
-    )
-    ni = FormatCurIndex Mod (UBound(fmts) + 1)
-    Selection.NumberFormat = fmts(ni)
-    FormatCurIndex = FormatCurIndex + 1
-    LogAction "CurFmt" & (ni + 1), PrevCurAddress
-    RegisterUndo "Currency Format"
+    ApplyFormatCycle "Cur", FormatCurIndex, PrevCurAddress, "CurFmt", "Currency Format"
 End Sub
 
-'------------------------------------------------------------------------------
 ' F05 CycleOtherNumbers  (Ctrl+Shift+8)
-'------------------------------------------------------------------------------
 Sub CycleOtherNumbers()
+    ApplyFormatCycle "Other", FormatOtherIndex, PrevOtherAddress, "OtherFmt", "Other Numbers Format"
+End Sub
+
+' Shared engine for F01-F05. The list is looked up after BeginMacroWithUndo,
+' which loads the preset if needed - so a preset switch applies immediately.
+Private Sub ApplyFormatCycle(ByVal which As String, ByRef index As Integer, ByRef prevAddr As String, _
+                             ByVal logName As String, ByVal undoName As String)
+    If TypeName(Selection) <> "Range" Then Exit Sub
     BeginMacroWithUndo
-    If Selection.Address(False, False) <> PrevOtherAddress Then FormatOtherIndex = 0
-    PrevOtherAddress = Selection.Address(False, False)
     Dim fmts As Variant, ni As Long
-    fmts = Array("0\A", "0\B", "0\F", """Q""#", "0\P", "0\E", "0.0""x""")
-    ni = FormatOtherIndex Mod (UBound(fmts) + 1)
+    Select Case which
+        Case "Num":   fmts = cfgNumFormats
+        Case "Date":  fmts = cfgDateFormats
+        Case "Pct":   fmts = cfgPctFormats
+        Case "Cur":   fmts = cfgCurFormats
+        Case "Other": fmts = cfgOtherFormats
+    End Select
+    If Selection.Address(False, False) <> prevAddr Then index = 0
+    prevAddr = Selection.Address(False, False)
+    ni = index Mod (UBound(fmts) + 1)
     Selection.NumberFormat = fmts(ni)
-    FormatOtherIndex = FormatOtherIndex + 1
-    LogAction "OtherFmt" & (ni + 1), PrevOtherAddress
-    RegisterUndo "Other Numbers Format"
+    index = index + 1
+    LogAction logName & (ni + 1), prevAddr
+    RegisterUndo undoName
 End Sub
 
 '------------------------------------------------------------------------------
@@ -183,7 +133,7 @@ Sub ScaleUp()
     For Each c In Selection.Cells
         If c.HasFormula Then
             c.Formula = "=(" & Mid(c.Formula, 2) & ")/1000"
-        ElseIf IsNumeric(c.Value) Then
+        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
             c.Value = c.Value / 1000
         End If
     Next c
@@ -204,7 +154,7 @@ Sub ScaleDown()
     For Each c In Selection.Cells
         If c.HasFormula Then
             c.Formula = "=(" & Mid(c.Formula, 2) & ")*1000"
-        ElseIf IsNumeric(c.Value) Then
+        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
             c.Value = c.Value * 1000
         End If
     Next c
@@ -229,7 +179,7 @@ Sub ToggleSign()
             Else
                 c.Formula = "=-(" & Mid(f, 2) & ")"       ' wrap
             End If
-        ElseIf IsNumeric(c.Value) Then
+        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
             c.Value = -c.Value
         End If
     Next c
@@ -249,7 +199,7 @@ Sub DivideByHundred()
     For Each c In Selection.Cells
         If c.HasFormula Then
             c.Formula = "=(" & Mid(c.Formula, 2) & ")/100"
-        ElseIf IsNumeric(c.Value) Then
+        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
             c.Value = c.Value / 100
         End If
     Next c
@@ -269,7 +219,7 @@ Sub MultiplyByHundred()
     For Each c In Selection.Cells
         If c.HasFormula Then
             c.Formula = "=(" & Mid(c.Formula, 2) & ")*100"
-        ElseIf IsNumeric(c.Value) Then
+        ElseIf IsNumberCell(c) Then          ' numbers only - blanks and text are left alone
             c.Value = c.Value * 100
         End If
     Next c
@@ -403,6 +353,8 @@ Private Function LastDigitIndex(ByVal sec As String) As Long
     pH = InStrRev(sec, "#")
     If p0 >= pH Then LastDigitIndex = p0 Else LastDigitIndex = pH
 End Function
+
+
 
 
 

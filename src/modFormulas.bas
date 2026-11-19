@@ -14,12 +14,12 @@ Option Explicit
 '   equals left, growth rates, and aggregation shortcuts.
 '
 ' Bound shortcuts (see modBindings):
-'   M01 – InsertCAGR              Ctrl+Alt+Shift+C
-'   M02 – InsertPercentChange     Ctrl+Alt+Shift+G
-'   M03 – EqualsLeft              Ctrl+Alt+D
-'   M04 – ApplyGrowthRate         Ctrl+Alt+Shift+W
-'   M05 – InsertQuickSum          Ctrl+Alt+=
-'   M06 – InsertQuickAverage      Ctrl+Alt+Shift+=
+'   M01 â€“ InsertCAGR              Ctrl+Alt+Shift+C
+'   M02 â€“ InsertPercentChange     Ctrl+Alt+Shift+V
+'   M03 â€“ EqualsLeft              Ctrl+Alt+L
+'   M04 â€“ ApplyGrowthRate         Ctrl+Alt+Shift+G
+'   M05 â€“ InsertQuickSum          Ctrl+Alt+=
+'   M06 â€“ InsertQuickAverage      Ctrl+Alt+Shift+=
 '==============================================================================
 
 '------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ Sub InsertCAGR()
 End Sub
 
 '------------------------------------------------------------------------------
-' M02 - InsertPercentChange  (Ctrl+Alt+Shift+G)
+' M02 - InsertPercentChange  (Ctrl+Alt+Shift+V)
 '     Inserts a % change formula referencing cells to the left.
 '     Formula: (Current - Prior) / ABS(Prior)
 '     Current = 1 cell left, Prior = 2 cells left
@@ -85,7 +85,7 @@ Sub InsertPercentChange()
             c.Formula = "=IFERROR((" & c.Offset(0, -1).Address(False, False) & "-" & _
                         c.Offset(0, -2).Address(False, False) & ")/ABS(" & _
                         c.Offset(0, -2).Address(False, False) & "),0)"
-            c.NumberFormat = "0.0%;(0.0%);""—"";@"
+            c.NumberFormat = cfgPctFormats(0)          ' first preset [PercentFormats]
         End If
     Next c
     
@@ -95,7 +95,7 @@ Sub InsertPercentChange()
 End Sub
 
 '------------------------------------------------------------------------------
-' M03 - EqualsLeft  (Ctrl+Alt+D)
+' M03 - EqualsLeft  (Ctrl+Alt+L)
 '     Links each selected cell to the cell directly on its left.
 '     e.g. select D5:G5 -> D5=C5, E5=D5, F5=E5, G5=F5
 '------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ End Sub
 
 
 '------------------------------------------------------------------------------
-' M04 - ApplyGrowthRate  (Ctrl+Alt+Shift+W)
+' M04 - ApplyGrowthRate  (Ctrl+Alt+Shift+G)
 '     Inserts formula: =LEFT * (1 + rate)
 '     Prompts for growth rate, then applies to all selected cells.
 '------------------------------------------------------------------------------

@@ -11,12 +11,22 @@ Tired of paying $125–200/year for WSP Boost, WST Macros, or Macabacus? ILLXL i
 
 | Module | What It Does |
 |---|---|
-| **modCore** | Performance mode, navigate to blanks/errors, break external links, absolute/relative refs |
+| **modCore** | Performance mode, undo engine, navigate to blanks/errors, absolute/relative refs |
+| **modSettings** | Presets - loads every list, color and key from a shareable `.ini` file |
 | **modFormatCycles** | Cycle number, date, currency, percent formats. Adjust decimals. Scale. Toggle sign. |
 | **modFormulas** | CAGR, % change, equals-left, growth rate, quick SUM/AVERAGE |
 | **modStyles** | Auto-color, font/fill/color cycles, input styles, header styles, indent, zero-check CF |
 | **modBorders** | Cycle individual borders, apply outline + inside, sum bars |
 | **modUnitTags** | Cycle FAST-standard unit tags ([mln $], [%], [x], [bps], etc.) |
+
+### What's New in the Source (next release)
+
+The `ILLXL.xlam` download is still the March 2026 build. The code in `src/` adds:
+
+- **Presets** - every format cycle, color convention, input/header style and shortcut key now lives in a plain-text `.ini` file. Switch your whole setup in one step, share a preset with a colleague, or edit it in Notepad. Ships with **Bruce Home** (the original ILLXL style), **Banker** (standard IB / WSP conventions) and **Nexcess** (corporate FP&A). Up to 3 presets; `Ctrl+Alt+Shift+S` to switch.
+- **Undo restores formatting** - Ctrl+Z now brings back fills, fonts, borders, number formats and conditional formatting, and always lands on the right sheet.
+- **Safer macros** - scale / sign / x100 leave blank cells blank, Text Case never overwrites formulas, Auto-Color no longer treats table references as external links, and every shortcut is handed back to Excel when the add-in unloads.
+- **Break External Links retired** - Data > Edit Links > Break Link does it safely.
 
 ---
 
@@ -135,6 +145,23 @@ Shortcuts load automatically every time Excel opens.
 | 3 | Gray | #D9D9D9 | Blue | Linked / locked cells |
 | 4 | Peach | #FFC799 | Teal | Special flagged inputs |
 | 5 | Pale Blue | #DDEBF7 | Dark Blue | Override cells |
+
+---
+
+## Build From Source
+
+Requires Windows, Excel, Python 3, and Excel's *Trust access to the VBA project object model* option (File > Options > Trust Center > Trust Center Settings > Macro Settings).
+
+```powershell
+pwsh -File build.ps1 -Edition Public     # -> build\ILLXL.xlam (Bruce Home preset by default)
+pwsh -File tests\run-tests.ps1            # regression tests in a hidden Excel instance
+```
+
+| Folder | Contents |
+|---|---|
+| `src/` | VBA modules (UTF-8; the build converts them for the VBA editor) |
+| `presets/` | Shipped presets - copied to `%APPDATA%\ILLXL\presets\` on first run, edit those copies |
+| `tests/` | Regression tests |
 
 ---
 

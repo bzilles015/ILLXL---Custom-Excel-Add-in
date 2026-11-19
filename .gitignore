@@ -1,0 +1,17 @@
+# ---- Work material: stays on this machine ----------------------------------
+Old/
+code/
+ILLXL_Handoff*.md
+*.xlsx
+*.thmx
+*.exportedUI
+ILLXL - Nexcess.xlam
+ILLXL_Shortcut_Reference_Nexcess.pdf
+
+# ---- Build output (rebuild with build.ps1) ---------------------------------
+build/
+
+# ---- Office / editor temp files --------------------------------------------
+~$*
+*.tmp
+.vscode/

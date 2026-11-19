@@ -15,18 +15,20 @@ Option Explicit
 '   Border cycling and quick border application for financial modeling.
 '
 ' Bound shortcuts (see modBindings):
-'   B01 – BorderTop              Ctrl+Alt+Shift+Up
-'   B02 – BorderBottom           Ctrl+Alt+Shift+Down
-'   B03 – BorderLeft             Ctrl+Alt+Shift+Left
-'   B04 – BorderRight            Ctrl+Alt+Shift+Right
-'   B05 – BordersOutlineInside   Ctrl+Alt+Shift+B
-'   B06 – ApplySumBar            Ctrl+Alt+-
-'   B07 – ApplyDoubleSumBar      Ctrl+Alt+_
+'   B01 â€“ BorderTop              Ctrl+Alt+Shift+Up
+'   B02 â€“ BorderBottom           Ctrl+Alt+Shift+Down
+'   B03 â€“ BorderLeft             Ctrl+Alt+Shift+Left
+'   B04 â€“ BorderRight            Ctrl+Alt+Shift+Right
+'   B05 â€“ BordersOutlineInside   Ctrl+Alt+Shift+B
+'   B06 â€“ ApplySumBar            Ctrl+Alt+-
+'   B07 â€“ ApplyDoubleSumBar      Ctrl+Alt+_
 '==============================================================================
 
 '------------------------------------------------------------------------------
 ' Shared Border Cycle Helper
 '------------------------------------------------------------------------------
+' Steps come from the preset ([Borders] CycleSteps - Nexcess: thin > none >
+' medium > hairline). Restarts at step 1 when the selection changes.
 Private Sub CycleBorder(ByVal edge As XlBordersIndex, _
                         ByRef index As Integer, _
                         ByRef prevAddr As String, _
@@ -35,51 +37,52 @@ Private Sub CycleBorder(ByVal edge As XlBordersIndex, _
     If Selection.Address(False, False) <> prevAddr Then index = 0
     prevAddr = Selection.Address(False, False)
     
-    Dim idx As Integer: idx = index Mod 4
+    Dim idx As Integer, w As Long
+    idx = index Mod (UBound(cfgBorderSteps) + 1)
+    w = cfgBorderSteps(idx)                         ' preset [Borders] CycleSteps
     With Selection.Borders(edge)
-        Select Case idx
-          Case 0: .LineStyle = xlContinuous: .ColorIndex = 0: .TintAndShade = 0: .Weight = xlThin
-          Case 1: .LineStyle = xlNone
-          Case 2: .LineStyle = xlContinuous: .ColorIndex = xlAutomatic: .TintAndShade = 0: .Weight = xlMedium
-          Case 3: .LineStyle = xlContinuous: .ColorIndex = xlAutomatic: .TintAndShade = 0: .Weight = xlHairline
+        Select Case w
+          Case BDR_NONE:   .LineStyle = xlNone
+          Case BDR_DOUBLE: .LineStyle = xlDouble: .ColorIndex = xlAutomatic: .Weight = xlThick
+          Case Else:       .LineStyle = xlContinuous: .ColorIndex = xlAutomatic: .TintAndShade = 0: .Weight = w
         End Select
     End With
-    
+
     index = index + 1
     LogAction "Bdr" & edgeName & "Cyc" & (idx + 1), prevAddr
     RegisterUndo edgeName & " Border"
 End Sub
 
 '------------------------------------------------------------------------------
-' B01 – BorderTop  (Ctrl+Alt+Shift+Up)
+' B01 â€“ BorderTop  (Ctrl+Alt+Shift+Up)
 '------------------------------------------------------------------------------
 Sub BorderTop()
     CycleBorder xlEdgeTop, BorderTopIndex, PrevTopAddress, "Top"
 End Sub
 
 '------------------------------------------------------------------------------
-' B02 – BorderBottom  (Ctrl+Alt+Shift+Down)
+' B02 â€“ BorderBottom  (Ctrl+Alt+Shift+Down)
 '------------------------------------------------------------------------------
 Sub BorderBottom()
     CycleBorder xlEdgeBottom, BorderBottomIndex, PrevBottomAddress, "Bottom"
 End Sub
 
 '------------------------------------------------------------------------------
-' B03 – BorderLeft  (Ctrl+Alt+Shift+Left)
+' B03 â€“ BorderLeft  (Ctrl+Alt+Shift+Left)
 '------------------------------------------------------------------------------
 Sub BorderLeft()
     CycleBorder xlEdgeLeft, BorderLeftIndex, PrevLeftAddress, "Left"
 End Sub
 
 '------------------------------------------------------------------------------
-' B04 – BorderRight  (Ctrl+Alt+Shift+Right)
+' B04 â€“ BorderRight  (Ctrl+Alt+Shift+Right)
 '------------------------------------------------------------------------------
 Sub BorderRight()
     CycleBorder xlEdgeRight, BorderRightIndex, PrevRightAddress, "Right"
 End Sub
 
 '------------------------------------------------------------------------------
-' B05 – BordersOutlineInside  (Ctrl+Alt+Shift+B)
+' B05 â€“ BordersOutlineInside  (Ctrl+Alt+Shift+B)
 '     Applies outline + inside borders using medium outline, thin inside.
 '------------------------------------------------------------------------------
 Sub BordersOutlineInside()
@@ -99,7 +102,7 @@ Sub BordersOutlineInside()
 End Sub
 
 '------------------------------------------------------------------------------
-' B06 – ApplySumBar  (Ctrl+Alt+-)
+' B06 â€“ ApplySumBar  (Ctrl+Alt+-)
 '     Single top border for subtotals - the classic "sum bar"
 '------------------------------------------------------------------------------
 Sub ApplySumBar()
@@ -117,7 +120,7 @@ Sub ApplySumBar()
 End Sub
 
 '------------------------------------------------------------------------------
-' B07 – ApplyDoubleSumBar  (Ctrl+Alt+_)
+' B07 â€“ ApplyDoubleSumBar  (Ctrl+Alt+_)
 '     Single top border + double bottom border for grand totals
 '------------------------------------------------------------------------------
 Sub ApplyDoubleSumBar()

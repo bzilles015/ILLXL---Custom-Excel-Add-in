@@ -12,6 +12,7 @@ Option Explicit
 ' Module: modUnitTags (Uxx)
 ' Purpose:
 '   - Apply uniform bracket unit tags (e.g., [#], [%], [mln $]) to selections.
+'     Tag lists come from the preset's [UnitTags] section.
 '   - Detect/replace/remove the last [...] tag in cell text.
 '
 ' IMPROVEMENTS:
@@ -22,34 +23,37 @@ Option Explicit
 '==============================================================================
 
 '------------------------------------------------------------------------------
-' U01 – CycleUnitTag_Value_Uniform  (Ctrl+Alt+Shift+T)
+' U01 â€“ CycleUnitTag_Value_Uniform  (Ctrl+Alt+Shift+T)
 '     Cycles selection through: [#], [%], [$], [mln $], [thd $], [bn $], [x], [pp], [bps].
 '------------------------------------------------------------------------------
 Public Sub CycleUnitTag_Value_Uniform()
-    ApplyUniformTagCycle Array("[#]", "[%]", "[$]", "[mln $]", "[thd $]", "[bn $]", "[x]", "[pp]", "[bps]"), _
+    EnsureSettings
+    ApplyUniformTagCycle cfgTagsValue, _
                          "UnitTag_Value_Uniform"
 End Sub
 
 '------------------------------------------------------------------------------
-' U02 – CycleUnitTag_Duration_Uniform  (Ctrl+Alt+Shift+O)
+' U02 â€“ CycleUnitTag_Duration_Uniform  (Ctrl+Alt+Shift+O)
 '     Cycles duration-style tags uniformly across the whole selection.
 '------------------------------------------------------------------------------
 Public Sub CycleUnitTag_Duration_Uniform()
-    ApplyUniformTagCycle Array("[d]", "[m]", "[q]", "[y]"), _
+    EnsureSettings
+    ApplyUniformTagCycle cfgTagsDuration, _
                          "UnitTag_Duration_Uniform"
 End Sub
 
 '------------------------------------------------------------------------------
-' U03 – CycleUnitTag_Rate_Uniform  (Ctrl+Alt+Shift+P)
+' U03 â€“ CycleUnitTag_Rate_Uniform  (Ctrl+Alt+Shift+P)
 '     Cycles rate-style tags uniformly across the whole selection.
 '------------------------------------------------------------------------------
 Public Sub CycleUnitTag_Rate_Uniform()
-    ApplyUniformTagCycle Array("[%/y]", "[$/unit]", "[$/FTE]", "[$/yr]"), _
+    EnsureSettings
+    ApplyUniformTagCycle cfgTagsRate, _
                          "UnitTag_Rate_Uniform"
 End Sub
 
 '------------------------------------------------------------------------------
-' U04 – RemoveUnitTag  - (Ctrl+Alt+Shift+Backspace)
+' U04 â€“ RemoveUnitTag  - (Ctrl+Alt+Shift+Backspace)
 '     Remove the final [...] tag from each selected cell
 '------------------------------------------------------------------------------
 Public Sub RemoveUnitTag()
