@@ -22,3 +22,6 @@ tests/screens/
 # Logo concept sheets (review only)
 tools/concepts.png
 tools/icons-sheet.png
+
+# Python cache
+__pycache__/
