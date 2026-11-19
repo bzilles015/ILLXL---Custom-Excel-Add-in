@@ -28,6 +28,8 @@ The `ILLXL.xlam` download is still the March 2026 build. The code in `src/` adds
 ![The ILLXL ribbon tab](assets/ribbon.png)
 
 - **ILLXL ribbon tab** - every command one click away. Dropdowns list the actual steps of each cycle (formats shown as live samples, styles and colors as swatches), and every tooltip shows the shortcut from your active preset.
+- **Model Tools** - find hardcoded numbers inside formulas and formulas that break their row's pattern, list every external link, wrap / unwrap IFERROR (`Ctrl+Alt+Shift+F`) and ROUND, build a hyperlinked sheet index, and **Ready to Send** (`Ctrl+Alt+Shift+Home`): every sheet back to its first cell under the freeze panes before you email a model.
+- **Update notice** - a quiet once-a-day check for a newer release on GitHub (only the version is requested; switch off in settings.ini).
 - **Settings window** (`Ctrl+Alt+Shift+S`) - edit presets, format cycles, colors, fonts, tags and shortcut keys without touching a file. Formats are checked as you type; shortcut conflicts are caught before they happen.
 
 ![The Settings window](assets/settings.png)

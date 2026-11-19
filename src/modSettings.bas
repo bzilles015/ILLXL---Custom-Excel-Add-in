@@ -68,6 +68,9 @@ Public cfgTagsDuration  As Variant
 Public cfgTagsRate      As Variant
 Public cfgVarianceLabels As Variant
 Public cfgHeaderPrompt  As String
+Public cfgIfErrorValue  As String      ' ToggleIfError fallback, e.g. 0  ""  NA()
+Public cfgRoundDigits   As String      ' ToggleRound digits
+Public cfgSendZoom      As String      ' SendReady zoom % ("" = leave each sheet's zoom)
 
 Public cfgFills()        As ColorItem
 Public cfgFontColors()   As ColorItem
@@ -140,7 +143,7 @@ End Function
 ' P02 - ApplyPreset - switch preset, reload, rebind keys
 '------------------------------------------------------------------------------
 Public Sub ApplyPreset(ByVal presetName As String)
-    WriteUtf8 RootDir() & "\settings.ini", "[General]" & vbCrLf & "ActivePreset=" & presetName & vbCrLf
+    SetAppSetting "General", "ActivePreset", presetName
     UnbindAllKeys                                   ' release the old preset's keys first
     LoadSettings
     BindAllKeys
@@ -472,7 +475,7 @@ Public Function PresetToText(ByVal data As Object) As String
         "AutoColor|Ctrl+Alt+A", "ZeroCheck|Ctrl+Alt+Shift+Z", _
         "InputStyles|Name | fill | font | dotted border", "HeaderStyles|Name | fill | font  (always bold)", _
         "Headers|Insert Headers / Variance Headers", "TabColors|Name | #color or none", _
-        "Borders|thin, none, medium, hairline, thick, double", "UnitTags|comma-separated, in cycle order", _
+        "Borders|thin, none, medium, hairline, thick, double", "Formulas|Wrap IFERROR / ROUND", "UnitTags|comma-separated, in cycle order", _
         "Keys|Ctrl / Alt / Shift + key.  Blank = no shortcut.")
     For Each s In specs
         parts = Split(s, "|", 2)
@@ -485,6 +488,12 @@ Public Function PresetToText(ByVal data As Object) As String
         If Not done.Exists(sec) Then out = out & SectionText(sec, "", data(sec))
     Next sec
     PresetToText = out
+End Function
+
+' Plain sections, no preset header (settings.ini)
+Private Function PresetBody(ByVal data As Object) As String
+    Dim sec As Variant
+    For Each sec In data.Keys: PresetBody = PresetBody & SectionText(sec, "", data(sec)): Next sec
 End Function
 
 Private Function SectionText(ByVal sec As String, ByVal note As String, ByVal d As Object) As String
@@ -527,6 +536,18 @@ Private Sub ReadAllSettings()
     cfgHdrInsertFont = ColorSetting("Headers", "InsertFont")
 
     cfgHeaderPrompt = IniValue(Ini, "Headers", "PromptDefault", "")
+    cfgIfErrorValue = IniValue(Ini, "Formulas", "IfErrorValue", "0")
+    If Len(cfgIfErrorValue) = 0 Then cfgIfErrorValue = "0"
+    cfgRoundDigits = IniValue(Ini, "Formulas", "RoundDigits", "0")
+    If Not IsNumeric(cfgRoundDigits) Then AddWarning "[Formulas] RoundDigits=" & cfgRoundDigits: cfgRoundDigits = "0"
+    cfgSendZoom = IniValue(Ini, "General", "SendReadyZoom", "")
+    If Len(cfgSendZoom) > 0 Then
+        If Not IsNumeric(cfgSendZoom) Then
+            AddWarning "[General] SendReadyZoom=" & cfgSendZoom: cfgSendZoom = ""
+        ElseIf CLng(cfgSendZoom) < 10 Or CLng(cfgSendZoom) > 400 Then
+            AddWarning "[General] SendReadyZoom must be 10-400": cfgSendZoom = ""
+        End If
+    End If
     cfgVarianceLabels = SplitSetting("Headers", "VarianceLabels")
     cfgTagsValue = SplitSetting("UnitTags", "Value")
     cfgTagsDuration = SplitSetting("UnitTags", "Duration")
@@ -851,13 +872,26 @@ Private Function BuiltInText(ByVal presetName As String) As String
 End Function
 
 Private Function ReadActivePreset() As String
+    ReadActivePreset = AppSetting("General", "ActivePreset", BasePreset())
+End Function
+
+' settings.ini - ILLXL's own settings (not part of any preset):
+'   [General] ActivePreset, CheckForUpdates      [Update] Checked, Latest
+Public Function AppSetting(ByVal sec As String, ByVal key As String, ByVal fallback As String) As String
     Dim path As String
     path = RootDir() & "\settings.ini"
-    ReadActivePreset = BasePreset()
-    If Len(Dir$(path)) > 0 Then
-        ReadActivePreset = IniValue(ParseIni(ReadUtf8(path)), "General", "ActivePreset", BasePreset())
-    End If
+    AppSetting = fallback
+    If Len(Dir$(path)) > 0 Then AppSetting = IniValue(ParseIni(ReadUtf8(path)), sec, key, fallback)
 End Function
+
+Public Sub SetAppSetting(ByVal sec As String, ByVal key As String, ByVal value As String)
+    Dim path As String, data As Object
+    path = RootDir() & "\settings.ini"
+    EnsurePresetFiles                               ' makes sure the folder exists
+    If Len(Dir$(path)) > 0 Then Set data = ParseIni(ReadUtf8(path)) Else Set data = NewDict()
+    IniSet data, sec, key, value
+    WriteUtf8 path, "; ILLXL's own settings - presets live in the presets folder" & vbLf & PresetBody(data)
+End Sub
 
 Private Function ReadUtf8(ByVal path As String) As String
     With CreateObject("ADODB.Stream")

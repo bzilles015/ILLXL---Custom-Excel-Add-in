@@ -24,6 +24,7 @@ GROUP_TITLES = {
     "Styles": ("Styles & Layout", "Colors, fonts, input and header styles, indent, headers and checks."),
     "Borders": ("Borders", "Edge cycles restart at step 1 when the selection changes."),
     "Unit Tags": ("Unit Tags", "FAST-standard tags. Typed text only - formulas are never touched."),
+    "Model Tools": ("Model Tools", "Audit a model, wrap formulas, build an index, and get a model ready to send."),
 }
 
 
@@ -84,7 +85,7 @@ def build_html(preset):
         title, sub = GROUP_TITLES[g]
         groups[g] = f"<section><h2>{title}</h2><p class='sub'>{sub}</p><table>{rows}</table></section>"
     # one printed page each, so every page gets the running header
-    command_pages = [["Core", "Formulas"], ["Formats"], ["Styles"], ["Borders", "Unit Tags"]]
+    command_pages = [["Core", "Formulas"], ["Formats"], ["Styles"], ["Borders", "Unit Tags"], ["Model Tools"]]
 
     def cycle_table(sec, kind):
         rows = []

@@ -245,6 +245,71 @@ try {
     Cmd 'NoSuchCommand'
     Check "Unknown command: reported, not crashed" ((RunV 'UiLastError') -match 'not an ILLXL command')
 
+    # ============================ MODEL TOOLS ============================
+    # Hardcode detector - the tricky cases
+    $cases = [ordered]@{ '=A1*1.05' = $true; '=A1+1' = $false; '=SUM(A1:A5)' = $false; '=Sheet2!B3*2' = $true
+        "='FY 2026'!A1" = $false; '="Q1 2026"&A1' = $false; '=tblX[[#This Row],[Col 2]]' = $false; '=A1*100' = $true
+        '=ROUND(A1,2)' = $true; '=$B$12' = $false; '=1E+03*A1' = $true; '=INDEX(A:A,5)' = $true; '=A1*0' = $false; '=FY2026' = $false }
+    $bad = @(); foreach ($k in $cases.Keys) { if ([bool]$xl.Run($tag + 'HasTypedNumber', $k) -ne $cases[$k]) { $bad += $k } }
+    Check "Hardcode detector: $($cases.Count) tricky formulas" ($bad.Count -eq 0) ($bad -join '  ')
+
+    $tl = $wb.Worksheets.Add(); $tl.Name = 'Tools'
+    $tl.Range("A1:A3").Value2 = 10; $tl.Range("B1").Formula = '=A1*1.05'; $tl.Range("B2").Formula = '=A2+1'; $tl.Range("B3").Formula = '=A3*2'
+    Sel $tl 'B1:B3'; Cmd 'AuditHardcodes'
+    Check "Find Hardcodes selects only the offenders" ($xl.Selection.Address(0, 0) -eq 'B1,B3') $xl.Selection.Address(0, 0)
+    foreach ($col in 'D', 'E', 'F', 'G', 'H') { $tl.Range("${col}6").Formula = "=" + [char]([int][char]$col - 1) + "6*1.1" }
+    $tl.Range("C6").Value2 = 100; $tl.Range("F6").Formula = '=E6*1.2'
+    Sel $tl 'A1'; Cmd 'AuditInconsistent'
+    Check "Inconsistent formulas: finds the odd one in the row" ($xl.Selection.Address(0, 0) -eq 'F6') $xl.Selection.Address(0, 0)
+
+    $wbL = $xl.Workbooks.Add(); $wb.Activate()
+    $tl.Range("J1").Formula = "=[" + $wbL.Name + "]Sheet1!A1"
+    Sel $tl 'A1'; Cmd 'AuditExternalLinks'
+    $rep = $wb.Worksheets.Item('ILLXL Links')
+    Check "External link report lists the linked cell" (($rep.Range("A5").Value2 -eq 'Tools') -and ($rep.Range("B5").Value2 -eq 'J1') -and ($rep.Hyperlinks.Count -ge 1)) "$($rep.Range('A5').Value2) $($rep.Range('B5').Value2)"
+    $wbL.Close($false); $wb.Activate()
+
+    # Ready to Send: frozen sheet -> first cell under the panes; others -> A1
+    $tl.Activate(); [void]$tl.Range("C3").Select(); $xl.ActiveWindow.FreezePanes = $true
+    $xl.ActiveWindow.Panes(4).ScrollRow = 200; [void]$tl.Range("K250").Select()
+    $data.Activate(); [void]$data.Range("H15").Select()
+    Cmd 'SendReady'
+    $tl.Activate(); $tlSel = $xl.ActiveCell.Address(0, 0); $tlTop = $xl.ActiveWindow.Panes($xl.ActiveWindow.Panes.Count).ScrollRow
+    $data.Activate(); $dataSel = $xl.ActiveCell.Address(0, 0)
+    Check "Ready to Send: frozen sheet -> first cell below/right of the panes" (($tlSel -eq 'C3') -and ($tlTop -eq 3)) "$tlSel / top row $tlTop"
+    Check "Ready to Send: unfrozen sheet -> A1" ($dataSel -eq 'A1') $dataSel
+
+    # IFERROR / ROUND toggles (wrap, unwrap, nested commas, partial selection, undo)
+    $tl.Activate(); $xl.ActiveWindow.FreezePanes = $false
+    $tl.Range("L1").Formula = '=A1/0'; $tl.Range("L2").Formula = '=SUM(A1,A2)'; $tl.Range("L3").Formula = '=IFERROR(A3/0,0)'
+    Sel $tl 'L1:L3'; Cmd 'ToggleIfError'
+    Check "IFERROR wraps the unwrapped, leaves the wrapped" (($tl.Range("L1").Formula -eq '=IFERROR(A1/0,0)') -and ($tl.Range("L2").Formula -eq '=IFERROR(SUM(A1,A2),0)') -and ($tl.Range("L3").Formula -eq '=IFERROR(A3/0,0)')) "$($tl.Range('L1').Formula) | $($tl.Range('L2').Formula)"
+    Cmd 'ToggleIfError'
+    Check "IFERROR unwraps all (nested commas kept)" (($tl.Range("L1").Formula -eq '=A1/0') -and ($tl.Range("L2").Formula -eq '=SUM(A1,A2)') -and ($tl.Range("L3").Formula -eq '=A3/0')) $tl.Range("L2").Formula
+    Cmd 'UndoLastAction'
+    Check "IFERROR toggle is undoable" ($tl.Range("L1").Formula -eq '=IFERROR(A1/0,0)') $tl.Range("L1").Formula
+    $tl.Range("M1").Formula = '=A1/3'; Sel $tl 'M1'; Cmd 'ToggleRound'
+    Check "ROUND wraps" ($tl.Range("M1").Formula -eq '=ROUND(A1/3,0)') $tl.Range("M1").Formula
+    Cmd 'ToggleRound'; Check "ROUND unwraps" ($tl.Range("M1").Formula -eq '=A1/3')
+
+    # Sheet Index: front of the book, a link per visible worksheet, refresh in place,
+    # and a sheet of yours already called "Index" is never touched
+    foreach ($s in @($wb.Worksheets)) { if ($s.Name -match 'Index') { $s.Delete() } }
+    $mine = $wb.Worksheets.Add(); $mine.Name = 'Index'; $mine.Range("A1").Value2 = 'my notes'
+    $before = $wb.Sheets.Count
+    Cmd 'BuildSheetIndex'
+    $ix = $wb.Sheets.Item(1)
+    Check "Sheet Index added at the front, your 'Index' left alone" (($ix.Name -eq 'Sheet Index') -and ($mine.Range("A1").Value2 -eq 'my notes') -and ($wb.Sheets.Count -eq $before + 1)) $ix.Name
+    $linkable = @($wb.Worksheets | Where-Object { $_.Visible -eq -1 -and $_.Name -ne 'Sheet Index' -and $_.Name -ne 'ILLXL Links' }).Count
+    Check "Sheet Index links every visible worksheet" ($ix.Hyperlinks.Count -eq $linkable) "$($ix.Hyperlinks.Count) links / $linkable sheets"
+    Cmd 'BuildSheetIndex'
+    Check "Sheet Index refreshes in place (no second index)" ($wb.Sheets.Count -eq $before + 1)
+
+    # Versions + settings.ini survives a preset switch
+    Check "Version compare" (([bool]$xl.Run($tag + 'IsNewerVersion', '2.1.0', '2.0.0')) -and -not ([bool]$xl.Run($tag + 'IsNewerVersion', '2.0.0', '2.0.0')) -and ([bool]$xl.Run($tag + 'IsNewerVersion', 'v2.0.10', '2.0.9')))
+    [void]$xl.Run($tag + 'SetAppSetting', 'Update', 'Latest', '9.9.9'); [void]$xl.Run($tag + 'ApplyPreset', 'Nexcess')
+    Check "settings.ini keeps other settings when the preset changes" (($xl.Run($tag + 'AppSetting', 'Update', 'Latest', '')) -eq '9.9.9')
+
     # Every catalog command has a description (ribbon tooltip + PDF)
     $missing = @($commands | Where-Object { ($xl.Run($tag + 'ScreentipFor', $_)) -eq '' })
     Check "Every command has a label" ($missing.Count -eq 0) ($missing -join ', ')

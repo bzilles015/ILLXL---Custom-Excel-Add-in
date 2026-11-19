@@ -113,6 +113,15 @@ Public Sub RunCmd(ByVal cmd As String)
         Case "CycleUnitTag_Duration_Uniform": CycleUnitTag_Duration_Uniform
         Case "CycleUnitTag_Rate_Uniform":     CycleUnitTag_Rate_Uniform
         Case "RemoveUnitTag":                 RemoveUnitTag
+        '---- Model tools
+        Case "AuditHardcodes":                AuditHardcodes
+        Case "AuditInconsistent":             AuditInconsistent
+        Case "AuditExternalLinks":            AuditExternalLinks
+        Case "SendReady":                     SendReady
+        Case "ToggleIfError":                 ToggleIfError
+        Case "ToggleRound":                   ToggleRound
+        Case "BuildSheetIndex":               BuildSheetIndex
+        Case "CheckForUpdates":               CheckForUpdates
         '---- Undo (Ctrl+Z after an ILLXL command)
         Case "UndoLastAction":                UndoLastAction
         Case Else

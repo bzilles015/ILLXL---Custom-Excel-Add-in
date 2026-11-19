@@ -151,6 +151,17 @@
           <button id="btnTagRemove" label="Remove Tag" image="tagremove" getSupertip="Rib_Supertip" tag="RemoveUnitTag" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
         </group>
 
+        <!-- ============================== MODEL TOOLS ============================== -->
+        <group id="gModel" label="Model Tools">
+          <button id="btnSendReady" label="Ready to Send" size="large" image="sendready_L" tag="SendReady" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnHardcodes" label="Find Hardcodes" image="hardcodes" tag="AuditHardcodes" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnInconsistent" label="Inconsistent Formulas" image="inconsist" tag="AuditInconsistent" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnLinks" label="External Links" imageMso="EditLinks" tag="AuditExternalLinks" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnIfError" label="IFERROR On/Off" image="iferror" tag="ToggleIfError" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnRound" label="ROUND On/Off" image="roundfn" tag="ToggleRound" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+          <button id="btnIndex" label="Sheet Index" image="sheetindex" tag="BuildSheetIndex" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
+        </group>
+
         <!-- ============================== TOOLS ============================== -->
         <group id="gTools" label="Tools">
           <button id="btnAbs" label="Absolute Refs" image="refabs" getSupertip="Rib_Supertip" tag="MakeRefsAbsolute" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
@@ -158,6 +169,7 @@
           <button id="btnNextBlank" label="Next Blank" imageMso="GoTo" getSupertip="Rib_Supertip" tag="GoToNextBlank" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
           <button id="btnNextErr" label="Next Error" imageMso="TraceError" getSupertip="Rib_Supertip" tag="GoToNextError" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
           <button id="btnErrChk" label="Error Checking" imageMso="ErrorChecking" getSupertip="Rib_Supertip" tag="ToggleErrorChecking" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
+          <button id="btnUpdates" label="Check for Updates" image="update" tag="CheckForUpdates" onAction="Rib_Action" getScreentip="Rib_Screentip" getSupertip="Rib_Supertip"/>
           <button id="btnCleanStyles" label="Clean Up Styles" image="cleanstyles" getSupertip="Rib_Supertip" tag="RemoveUnusedStyles" onAction="Rib_Action" getScreentip="Rib_Screentip"/>
         </group>
 

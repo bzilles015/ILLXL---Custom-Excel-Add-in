@@ -96,7 +96,7 @@ End Function
 '     looking for "[" - table refs like tblSales[Amount] also contain "[".
 '     A formula is external if it names a linked file or a web address.
 '------------------------------------------------------------------------------
-Private Function ExternalLinkFiles(ByVal wb As Workbook) As Variant
+Public Function ExternalLinkFiles(ByVal wb As Workbook) As Variant
     Dim src As Variant, i As Long, p As String, cut As Long
     src = wb.LinkSources(xlExcelLinks)              ' full paths/URLs, or Empty
     If IsEmpty(src) Then Exit Function
@@ -108,7 +108,7 @@ Private Function ExternalLinkFiles(ByVal wb As Workbook) As Variant
     ExternalLinkFiles = src
 End Function
 
-Private Function IsExternalFormula(ByVal f As String, ByVal links As Variant) As Boolean
+Public Function IsExternalFormula(ByVal f As String, ByVal links As Variant) As Boolean
     Dim i As Long
     If InStr(1, f, "http", vbTextCompare) > 0 Then IsExternalFormula = True: Exit Function
     If IsEmpty(links) Then Exit Function

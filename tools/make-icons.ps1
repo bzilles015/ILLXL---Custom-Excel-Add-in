@@ -88,6 +88,17 @@ $icons = [ordered]@{
     tagrate    = { param($cv) Txt $cv '[%]' 66 $BLUE 64 64 }
     tagremove  = { param($cv) Txt $cv '[ ]' 70 $INK 64 64; Line $cv $RED 11 @(26, 104, 102, 24) }
     cleanstyles= { param($cv) Txt $cv 'Aa' 70 $INK 58 56; Line $cv $RED 10 @(70, 118, 118, 70); Line $cv $RED 10 @(70, 70, 118, 118) }
+    # ---- Model Tools
+    hardcodes  = { param($cv) Txt $cv '#' 92 $BLUE 50 52; $p = New-Object Drawing.Pen $AMBER, 11
+                   $cv.DrawEllipse($p, 8, 8, 84, 84); Line $cv $AMBER 14 @(84, 84, 118, 118) }
+    inconsist  = { param($cv) Fill $cv $INK 6 46 30 36 6; Fill $cv $RED 49 46 30 36 6; Fill $cv $INK 92 46 30 36 6
+                   Txt $cv '!' 44 $WHITE 64 64 }
+    sendready  = { param($cv) Poly $cv $BLUE @(8, 60, 120, 10, 88, 118, 62, 76); Poly $cv (C '#1D4ED8') @(62, 76, 120, 10, 70, 110) }
+    sheetindex = { param($cv) foreach ($y in 22, 56, 90) { Fill $cv $BLUE 10 ($y - 8) 18 18 4; Fill $cv $INK 38 ($y - 5) 80 12 4 } }
+    iferror    = { param($cv) Txt $cv 'IF' 64 $BLUE 46 52; Txt $cv '!' 64 $RED 102 52; Line $cv $INK 6 @(14, 104, 114, 104) }
+    roundfn    = { param($cv) Txt $cv '1.5' 54 $INK 64 40; Line $cv $BLUE 8 @(64, 62, 64, 92) -Arrow; Txt $cv '2' 40 $BLUE 64 112 }
+    update     = { param($cv) $p = New-Object Drawing.Pen $GREEN, 12; $p.EndCap = 'Round'; $p.StartCap = 'Round'
+                   $cv.DrawArc($p, 18, 18, 92, 92, 300, 290); Poly $cv $GREEN @(96, 6, 120, 40, 82, 44) }
 }
 
 #---- render ---------------------------------------------------------------------------

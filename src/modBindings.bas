@@ -31,6 +31,8 @@ Private Catalog   As Object                     ' macro -> "Group|Label"
 Sub Auto_Open()
     LoadSettings
     BindAllKeys
+    ' quiet once-a-day update check, after Excel has finished starting
+    Application.OnTime Now + TimeSerial(0, 0, 15), "'" & ThisWorkbook.Name & "'!StartupUpdateCheck"
 End Sub
 
 '------------------------------------------------------------------------------
@@ -239,6 +241,24 @@ Private Sub LoadCatalog()
         "Add or cycle a rate tag: [%/y] [$/unit] [$/FTE] [$/yr]."
     Cmd "RemoveUnitTag", "Unit Tags", "Remove Unit Tag", _
         "Remove the last [...] tag from each selected cell."
+
+    '==== modTools (Txx) =====================================================
+    Cmd "AuditHardcodes", "Model Tools", "Find Hardcodes in Formulas", _
+        "Select every formula with a typed-in number (=A1*1.05). Works on the selection, or the whole sheet when one cell is selected."
+    Cmd "AuditInconsistent", "Model Tools", "Find Inconsistent Formulas", _
+        "Select formulas that break the pattern of the formulas beside them in their row."
+    Cmd "AuditExternalLinks", "Model Tools", "External Link Report", _
+        "List every cell and name that links to another file, each with a link to jump to it."
+    Cmd "SendReady", "Model Tools", "Ready to Send", _
+        "Every sheet back to its first cell below the freeze panes (or A1), first sheet shown - before you send a model."
+    Cmd "ToggleIfError", "Model Tools", "Wrap / Unwrap IFERROR", _
+        "Wrap the selected formulas in IFERROR(...,0); press again to take it off. The fallback value is in your preset."
+    Cmd "ToggleRound", "Model Tools", "Wrap / Unwrap ROUND", _
+        "Wrap the selected formulas in ROUND(...,0); press again to take it off. Digits are in your preset."
+    Cmd "BuildSheetIndex", "Model Tools", "Sheet Index", _
+        "Add (or refresh) a hyperlinked table of contents at the front of the workbook."
+    Cmd "CheckForUpdates", "Core", "Check for Updates", _
+        "See whether a newer ILLXL is out on GitHub."
 End Sub
 
 Private Sub Cmd(ByVal macro As String, ByVal group As String, ByVal label As String, ByVal desc As String)

@@ -29,7 +29,10 @@ function Press([string]$friendly) {
     else { $vk = [int][char]$key.ToUpper() }
     $down = @(); if ($mods -contains 'Ctrl') { $down += 0x11 }; if ($mods -contains 'Alt') { $down += 0x12 }; if ($shift) { $down += 0x10 }
     foreach ($m in $down) { [W.K]::keybd_event([byte]$m, 0, 0, [UIntPtr]::Zero) }
-    [W.K]::keybd_event([byte]$vk, 0, 0, [UIntPtr]::Zero); [W.K]::keybd_event([byte]$vk, 0, 2, [UIntPtr]::Zero)
+    # arrows / Home / End / PgUp / PgDn / Insert / Delete are "extended" keys - without the
+    # flag Windows sends the numpad versions, which type digits when Num Lock is on
+    $ext = [uint32]$(if ($vk -ge 0x21 -and $vk -le 0x2E) { 1 } else { 0 })
+    [W.K]::keybd_event([byte]$vk, 0, $ext, [UIntPtr]::Zero); [W.K]::keybd_event([byte]$vk, 0, ($ext -bor 2), [UIntPtr]::Zero)
     [array]::Reverse($down); foreach ($m in $down) { [W.K]::keybd_event([byte]$m, 0, 2, [UIntPtr]::Zero) }
 }
 function Focus([IntPtr]$h) {
